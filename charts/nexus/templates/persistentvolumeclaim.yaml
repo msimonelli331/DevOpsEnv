@@ -1,0 +1,14 @@
+{{- if .Values.persistentVolume.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "nexus.fullname" . }}
+  labels: {{- include "nexus.labels" . | nindent 4 }}
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+{{- end }}

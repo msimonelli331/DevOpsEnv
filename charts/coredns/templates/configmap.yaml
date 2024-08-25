@@ -1,0 +1,21 @@
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+apiVersion: v1
+data:
+  ingress.db: |
+    $TTL 1h
+    @         IN    SOA   ns.{{ .Values.vars.domain }}. hostmaster.{{ .Values.vars.domain }}. (
+                              2023110601 ; serial
+                              1h         ; refresh
+                              30m        ; retry
+                              1w         ; expire
+                              2h         ; minimum
+                          )
+    @         IN    NS      ns.{{ .Values.vars.domain }}.
+    *.{{ .Values.vars.domain }}.   IN    A       {{ .Values.vars.ip }}
+  ingress.server: |
+    {{ .Values.vars.domain }} {
+      file /etc/coredns/custom/ingress.db
+    }
