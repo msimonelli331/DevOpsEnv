@@ -124,16 +124,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 2. Install coredns, be sure to change the IP to your machines IP
 
    ```bash
-   helm template coredns devopsenv/coredns -n kube-system --set vars.domain=devops --set vars.ip=127.0.0.1 > /var/snap/microk8s/common/addons/core/addons/dns/coredns.yaml
+   helm install coredns devopsenv/coredns --namespace kube-system --set vars.domain=devops --set vars.ip=127.0.0.1
    ```
 
-3. Renable coredns
-
-   ```bash
-   microk8s enable dns
-   ```
-
-4. Setup TLS for ingresses following steps [here](https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/)
+3. Setup TLS for ingresses following steps [here](https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/)
 
    ```bash
    openssl genrsa -aes256 -out ca.key 4096
