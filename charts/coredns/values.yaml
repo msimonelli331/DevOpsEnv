@@ -22,8 +22,6 @@ coredns:
     maxUnavailable: 0
     maxSurge: 10%
 
-  terminationGracePeriodSeconds: 30
-
   podAnnotations: {}
   serviceType: ClusterIP
 
@@ -44,7 +42,7 @@ coredns:
     clusterIP: "" # This should be populated or left empty if not used
 
   serviceAccount:
-    create: false
+    create: true
     name: coredns
 
   rbac:
@@ -76,6 +74,10 @@ coredns:
           configBlock: |-
             lameduck 5s
         - name: ready
+        - name: log
+          parameters: .
+          configBlock: |-
+            class error
         - name: kubernetes
           parameters: cluster.local in-addr.arpa ip6.arpa
           configBlock: |-
@@ -84,7 +86,7 @@ coredns:
         - name: prometheus
           parameters: :9153
         - name: forward
-          parameters: . /etc/resolv.conf
+          parameters: . $NAMESERVERS
         - name: cache
           parameters: 30
         - name: loop
@@ -182,4 +184,5 @@ coredns:
   deployment:
     enabled: true
     name: ""
-    annotations: {}
+    annotations:
+      priorityClassName: system-cluster-critical

@@ -96,7 +96,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 1. Add this helm repo
 
    ```bash
-   helm repo add devopsenv https://msimonelli331.github.io/devopsenv
+   helm repo add devopsenv https://msimonelli331.github.io/DevOpsEnv/
    ```
 
 2. Confirm the repo was added and has charts
