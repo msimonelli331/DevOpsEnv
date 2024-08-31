@@ -58,6 +58,16 @@ entries:
   gitea:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2024-08-31T14:42:28.492664192Z"
+    description: A Helm chart for Kubernetes
+    digest: 4e273a67bdd507b8c050338a87461fd1a5358c76f75ba30602577c0776c38ad3
+    name: gitea
+    type: application
+    urls:
+    - https://github.com/msimonelli331/DevOpsEnv/releases/download/gitea-0.1.1/gitea-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2024-08-25T22:37:12.9176822Z"
     description: A Helm chart for Kubernetes
     digest: 5d937d9b0bbd1908f0c825e2edcaeda808c75912ca29bf557fa47f255c121311
@@ -107,4 +117,4 @@ entries:
     urls:
     - https://github.com/msimonelli331/DevOpsEnv/releases/download/nexus-0.1.0/nexus-0.1.0.tgz
     version: 0.1.0
-generated: "2024-08-31T14:28:13.905880416Z"
+generated: "2024-08-31T14:42:28.492683748Z"
