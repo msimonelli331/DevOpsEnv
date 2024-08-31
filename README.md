@@ -176,7 +176,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 3. Install the helm chart, updating the hostnames to match the selected domain name from previous steps
 
    ```bash
-   helm install nexus devopsenv/nexus --create-namespace -n devops --set ingress.hosts[0].host=nexus.devops --set ingress.hosts[1].host=container.devops
+   helm install nexus devopsenv/nexus --create-namespace -n devops --set nexusHostname="&nexusHostname nexus.devops" --set containerHostname="&containerHostname container.devops"
    ```
 
 4. Get the default password

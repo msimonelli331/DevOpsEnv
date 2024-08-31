@@ -54,18 +54,21 @@ services:
     protocol: TCP
     targetPort: 8082
 
+nexusHostname: &nexusHostname nexus.devops
+containerHostname: &containerHostname container.devops
+
 ingress:
   enabled: true
   className: ""
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "30G"
   hosts:
-    - host: nexus.devops
+    - host: *nexusHostname
       paths:
         - path: /
           pathType: Prefix
           port: 8081
-    - host: container.devops
+    - host: *containerHostname
       paths:
         - path: /
           pathType: Prefix
@@ -73,8 +76,8 @@ ingress:
   tls:
     - secretName: ingress-tls
       hosts:
-        - nexus.devops
-        - container.devops
+        - *nexusHostname
+        - *containerHostname
 
 resources:
   {}
