@@ -69,6 +69,16 @@ entries:
   nexus:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2024-08-31T14:02:10.888850413Z"
+    description: A Helm chart for Kubernetes
+    digest: 2f5f16c2ac8d9b1af24b3186b9d5ae8ca73cd60ce8735565cf16682bff6b627b
+    name: nexus
+    type: application
+    urls:
+    - https://github.com/msimonelli331/DevOpsEnv/releases/download/nexus-0.1.1/nexus-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2024-08-25T22:37:13.020722328Z"
     description: A Helm chart for Kubernetes
     digest: a694b99b76e2b8f6a84e14cafea36f32a52f6ed6bc7871af8d64339880af6353
@@ -77,4 +87,4 @@ entries:
     urls:
     - https://github.com/msimonelli331/DevOpsEnv/releases/download/nexus-0.1.0/nexus-0.1.0.tgz
     version: 0.1.0
-generated: "2024-08-31T13:38:02.677580222Z"
+generated: "2024-08-31T14:02:10.888865361Z"
