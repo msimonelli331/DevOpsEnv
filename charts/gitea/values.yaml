@@ -63,12 +63,14 @@ services:
     protocol: TCP
     targetPort: 2222
 
+gitHostname: &gitHostname git.devops
+
 ingress:
   enabled: true
   className: ""
   annotations:
   hosts:
-    - host: git.devops
+    - host: *gitHostname
       paths:
         - path: /
           pathType: Prefix

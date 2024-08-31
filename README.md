@@ -221,7 +221,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 4. Install the helm chart, updating the hostname to match the selected domain name from previous steps
 
    ```bash
-   helm install gitea devopsenv/gitea --create-namespace -n devops --set ingress.hosts[0].host=git.devops
+   helm install gitea devopsenv/gitea --create-namespace -n devops --set gitHostname="&gitHostname git.devops"
    ```
 
 5. Navigate to http://git.devops/ for initial configuration
