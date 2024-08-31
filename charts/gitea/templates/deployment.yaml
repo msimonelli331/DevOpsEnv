@@ -53,14 +53,14 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- range .Values.persistentVolumes }}
           volumeMounts:
+          {{- range .Values.persistentVolumes }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
               subPath: {{ .subPath }}
           {{- end }}
-      {{- range .Values.persistentVolumes }}
       volumes:
+      {{- range .Values.persistentVolumes }}
         - name: {{ .name }}
           persistentVolumeClaim:
             claimName: {{ $fullName }}-{{ .suffix }}
