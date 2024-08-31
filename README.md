@@ -237,3 +237,17 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - https://microk8s.io/docs/addon-ingress
 - https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/
 - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
+- https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
+- https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
+
+## Notes
+
+Cleanup old images
+
+```bash
+VERSION="v1.30.0"
+curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-${VERSION}-linux-amd64.tar.gz --output crictl-${VERSION}-linux-amd64.tar.gz
+tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-linux-amd64.tar.gz
+crictl -r unix:///var/snap/microk8s/common/run/containerd.sock rmi --prune
+```
