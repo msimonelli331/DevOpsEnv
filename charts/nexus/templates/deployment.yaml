@@ -46,19 +46,19 @@ spec:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
-          # resources:
-          #   {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.persistentVolume.enabled -}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.persistentVolume.enabled }}
           volumeMounts:
-            - name: {{ .Values.persistentVolume.name }}
-              mountPath: {{ .Values.persistentVolume.mountPath }}
-              subPath: {{ .Values.persistentVolume.subPath }}
+          - name: {{ .Values.persistentVolume.name }}
+            mountPath: {{ .Values.persistentVolume.mountPath }}
+            subPath: {{ .Values.persistentVolume.subPath }}
           {{- end }}
-      {{- if .Values.persistentVolume.enabled -}}
+      {{- if .Values.persistentVolume.enabled }}
       volumes:
-        - name: {{ .Values.persistentVolume.name }}
-          persistentVolumeClaim:
-            claimName: {{ include "nexus.fullname" . }}
+      - name: {{ .Values.persistentVolume.name }}
+        persistentVolumeClaim:
+          claimName: {{ include "nexus.fullname" . }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
