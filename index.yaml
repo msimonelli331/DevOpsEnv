@@ -3,6 +3,16 @@ entries:
   buildkitd:
   - apiVersion: v2
     appVersion: 0.15.2
+    created: "2024-09-01T15:31:48.070319003Z"
+    description: Buildkitd, container builder, Helm chart for Kubernetes
+    digest: 6637ad06f6560c93b6113eff84d569ae390e77b45cb9c320640dd0980a8d8efc
+    name: buildkitd
+    type: application
+    urls:
+    - https://github.com/msimonelli331/DevOpsEnv/releases/download/buildkitd-0.1.1/buildkitd-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 0.15.2
     created: "2024-09-01T15:25:41.634856189Z"
     description: A Helm chart for Kubernetes
     digest: fe52627c395afbdf4cbbfa50a6400c633aa7df3739ef680069c8d68c8e145a84
@@ -110,6 +120,16 @@ entries:
   gitea-runner:
   - apiVersion: v2
     appVersion: 0.2.10
+    created: "2024-09-01T15:31:48.198085989Z"
+    description: Gitea Act Runner Helm chart for Kubernetes
+    digest: 96a8556516f5ac11c8a29e6a05643722221d99147c998aa37ca72d107a13c5e3
+    name: gitea-runner
+    type: application
+    urls:
+    - https://github.com/msimonelli331/DevOpsEnv/releases/download/gitea-runner-0.1.1/gitea-runner-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 0.2.10
     created: "2024-09-01T15:25:41.81321667Z"
     description: Gitea Act Runner Helm chart for Kubernetes
     digest: ce27d3462ec29d11427e2ce114994c90775ce1db7d02e9a2131c9b0fd7bf25f6
@@ -159,4 +179,4 @@ entries:
     urls:
     - https://github.com/msimonelli331/DevOpsEnv/releases/download/nexus-0.1.0/nexus-0.1.0.tgz
     version: 0.1.0
-generated: "2024-09-01T15:25:41.813240124Z"
+generated: "2024-09-01T15:31:48.198117357Z"
