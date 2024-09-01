@@ -242,7 +242,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 1. Create the host volume directory
 
    ```bash
-   mkdir -p /mnt/devops/gitea-runner/{data,config}
+   mkdir -p /mnt/devops/gitea-runner
    ```
 
 2. Label the node this local volume is running on
