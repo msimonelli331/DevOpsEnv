@@ -93,7 +93,9 @@ coredns:
         - name: reload
         - name: loadbalance
 
-  extraConfig: {}
+  extraConfig:
+    import:
+      parameters: /etc/coredns/custom/*.server
 
   livenessProbe:
     enabled: true
@@ -117,10 +119,7 @@ coredns:
 
   podDisruptionBudget: {}
 
-  zoneFiles:
-    - filename: ingress.corefile
-      contents: |-
-        import /etc/coredns/custom/*.server
+  zoneFiles: []
 
   extraVolumes:
     - name: custom-config-volume
