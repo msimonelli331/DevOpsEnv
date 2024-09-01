@@ -24,6 +24,20 @@ entries:
   coredns:
   - apiVersion: v2
     appVersion: 1.10.1
+    created: "2024-09-01T16:56:01.13316573Z"
+    dependencies:
+    - name: coredns
+      repository: https://coredns.github.io/helm
+      version: 1.24.5
+    description: CoreDNS Helm chart for Kubernetes
+    digest: 24013e9be9ed17ac2b16e9229eed581836725cc07da4d0f324171fb3fb716bd0
+    name: coredns
+    type: application
+    urls:
+    - https://github.com/msimonelli331/DevOpsEnv/releases/download/coredns-0.1.4/coredns-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v2
+    appVersion: 1.10.1
     created: "2024-09-01T16:49:00.218004139Z"
     dependencies:
     - name: coredns
@@ -207,4 +221,4 @@ entries:
     urls:
     - https://github.com/msimonelli331/DevOpsEnv/releases/download/nexus-0.1.0/nexus-0.1.0.tgz
     version: 0.1.0
-generated: "2024-09-01T16:49:00.218044103Z"
+generated: "2024-09-01T16:56:01.133205223Z"
