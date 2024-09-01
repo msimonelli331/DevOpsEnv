@@ -322,7 +322,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
 - https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
 - https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
-- https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/rootless-docker.yaml
+- https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/dind-docker.yaml
 
 ## Notes
 

@@ -4,29 +4,51 @@
 
 replicaCount: 1
 
-image:
-  repository: gitea/act_runner
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.2.10-dind-rootless"
-
 token: ""
 gitURL: &gitURL http://git.devops
 
-env:
-  - name: DOCKER_HOST
-    value: unix:///var/snap/microk8s/common/run/containerd.sock
-  # - name: DOCKER_CERT_PATH
-  #   value: /certs/client
-  # - name: DOCKER_TLS_VERIFY
-  #   value: "1"
-  - name: GITEA_INSTANCE_URL
-    value: *gitURL
-  - name: GITEA_RUNNER_REGISTRATION_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: runner-secret
-        key: token
+images:
+  - name: runner
+    repository: gitea/act_runner
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "0.2.10"
+    command:
+      [
+        "sh",
+        "-c",
+        "while ! nc -z localhost 2376 </dev/null; do echo 'waiting for docker daemon...'; sleep 5; done; /sbin/tini -- /opt/act/run.sh",
+      ]
+    env:
+      - name: DOCKER_HOST
+        value: tcp://localhost:2376
+      - name: DOCKER_CERT_PATH
+        value: /certs/client
+      - name: DOCKER_TLS_VERIFY
+        value: "1"
+      - name: GITEA_INSTANCE_URL
+        value: *gitURL
+      - name: GITEA_RUNNER_REGISTRATION_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: runner-secret
+            key: token
+    persistentVolume:
+      enabled: true
+      name: gitea-runner-volume
+      mountPath: /data
+  - name: daemon
+    repository: docker
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "23.0.6-dind"
+    env:
+      - name: DOCKER_TLS_CERTDIR
+        value: /certs
+    securityContext:
+      privileged: true
+    persistentVolume:
+      enabled: false
 
 imagePullSecrets: []
 nameOverride: ""
@@ -46,17 +68,7 @@ serviceAccount:
 podAnnotations: {}
 podLabels: {}
 
-podSecurityContext:
-  fsGroup: 1000
-
-securityContext:
-  privileged: true
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+podSecurityContext: {}
 
 service: {}
 
@@ -123,9 +135,7 @@ volumeMounts: []
 
 persistentVolume:
   enabled: true
-  name: gitea-runner-volume
   hostPath: /mnt/devops/gitea-runner
-  mountPath: /data
 
 nodeSelector: {}
 

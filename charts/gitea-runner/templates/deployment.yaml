@@ -31,48 +31,63 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+      {{- $fullName := include "gitea-runner.fullname" . -}}
+      {{- range .Values.images }}
+        - name: {{ .name }}
+          {{- with .securityContext }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .repository }}:{{ .tag }}"
+          imagePullPolicy: {{ .pullPolicy }}
+          {{- with .command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .env }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.livenessProbe }}
+          {{- with .livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.readinessProbe }}
+          {{- with .readinessProbe }}
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.resources }}
+          {{- with .resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.persistentVolume.enabled }}
           volumeMounts:
-          - name: {{ .Values.persistentVolume.name }}
-            mountPath: {{ .Values.persistentVolume.mountPath }}
-            subPath: {{ .Values.persistentVolume.subPath }}
+          {{- if .persistentVolume.enabled }}
+          - name: {{ .persistentVolume.name }}
+            mountPath: {{ .persistentVolume.mountPath }}
+            subPath: {{ .persistentVolume.subPath }}
           {{- end }}
-      {{- if .Values.persistentVolume.enabled }}
-      volumes:
-      - name: {{ .Values.persistentVolume.name }}
-        persistentVolumeClaim:
-          claimName: {{ include "gitea-runner.fullname" . }}
+          - name: docker-certs
+            mountPath: /certs
       {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- range .Values.images }}
+      {{- if .persistentVolume.enabled }}
+      volumes:
+      - name: {{ .persistentVolume.name }}
+        persistentVolumeClaim:
+          claimName: {{ $fullName }}
+      - name: docker-certs
+        emptyDir: {}
+      {{- end }}
+      {{- end }}
+      {{- with .nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
