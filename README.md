@@ -228,6 +228,76 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    1. Configure the database as sqlite3
    2. Add an admin user
 
+### Gitea Runner
+
+#### Preconditions
+
+1. Internet Connection
+2. OS with Kubernetes and helm
+3. This helm repo added
+4. Gitea deployed and running
+
+#### Install Steps
+
+1. Create the host volume directory
+
+   ```bash
+   mkdir -p /mnt/devops/gitea-runner/{data,config}
+   ```
+
+2. Label the node this local volume is running on
+
+   ```bash
+   kubectl label nodes localhost.localdomain gitea-runner=local
+   ```
+
+3. Update volume permissions
+
+   ```bash
+   chown -R 1000:1000 /mnt/devops/gitea-runner
+   ```
+
+4. Go to gitea webpage > Settings > Actions > Runners > Create new Runner > Copy the token
+
+5. Install the helm chart, updating the hostname to match the selected domain name from previous steps
+
+   ```bash
+   helm install gitea-runner devopsenv/gitea-runner --create-namespace -n devops --set token=<registration token from previous step> --set gitURL="&gitURL http://git.devops"
+   ```
+
+### Buildkitd
+
+#### Preconditions
+
+1. Internet Connection
+2. OS with Kubernetes and helm
+3. This helm repo added
+
+#### Install Steps
+
+4. Install the helm chart
+
+   ```bash
+   helm install buildkitd devopsenv/buildkitd --create-namespace -n devops
+   ```
+
+### Builder
+
+#### Preconditions
+
+1. Internet Connection
+2. OS with Kubernetes and helm
+3. Gitea deployed and running
+4. Gitea runner deployed, running, and connected to gitea
+
+#### Install Steps
+
+1. Create a Buidler git repo in gitea
+
+2. Add the contents of the builder folder
+
+3. Update the ca.crt with the one generated earlier
+
 ## Resources
 
 - https://rockylinux.org/download
@@ -239,6 +309,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
 - https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
 - https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
+- https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/rootless-docker.yaml
 
 ## Notes
 
