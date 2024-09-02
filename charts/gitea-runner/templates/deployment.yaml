@@ -66,27 +66,14 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with .volumeMounts }}
           volumeMounts:
-          {{- if .persistentVolume.enabled }}
-          - name: {{ .persistentVolume.name }}
-            mountPath: {{ .persistentVolume.mountPath }}
-            subPath: {{ .persistentVolume.subPath }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
-          - name: docker-certs
-            mountPath: /certs
       {{- end }}
-      {{- range .Values.images }}
-      {{- if .persistentVolume.enabled }}
+      {{- with .Values.volumes }}
       volumes:
-      - name: {{ .persistentVolume.name }}
-        persistentVolumeClaim:
-          claimName: {{ $fullName }}
-      - name: docker-certs
-        emptyDir: {}
-      - name: private-registry-cert
-        secret:
-          secretName: registry-secret
-      {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .nodeSelector }}
       nodeSelector:

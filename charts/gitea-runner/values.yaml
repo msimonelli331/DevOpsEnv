@@ -38,10 +38,11 @@ images:
           secretKeyRef:
             name: runner-secret
             key: token
-    persistentVolume:
-      enabled: true
-      name: gitea-runner-volume
-      mountPath: /data
+    volumeMounts:
+      - name: docker-certs
+        mountPath: /certs
+      - name: gitea-runner-volume
+        mountPath: /data
   - name: daemon
     repository: docker
     pullPolicy: IfNotPresent
@@ -53,22 +54,53 @@ images:
         imagePullPolicy: IfNotPresent
         command:
           [
-            cp /private-registry-certs/ca.crt /usr/local/share/ca-certificates/ca.crt,
-            update-ca-certificates,
+            "sh",
+            "-c",
+            "cp /private-registry-certs/ca.crt /usr/local/share/ca-certificates/ca.crt",
+            "sh",
+            "-c",
+            "update-ca-certificates",
+            "sh",
+            "-c",
             *mkdirCommand,
+            "sh",
+            "-c",
             *cpCommand,
           ]
         volumeMounts:
           - name: private-registry-cert
             readOnly: true
             mountPath: "/private-registry-certs"
+          - name: ca-certificates
+            mountPath: "/usr/local/share/ca-certificates"
+          - name: private-docker-certs
+            mountPath: "/etc/docker/certs.d"
     env:
       - name: DOCKER_TLS_CERTDIR
         value: /certs
     securityContext:
       privileged: true
-    persistentVolume:
-      enabled: false
+    volumeMounts:
+      - name: docker-certs
+        mountPath: /certs
+      - name: ca-certificates
+        mountPath: "/usr/local/share/ca-certificates"
+      - name: private-docker-certs
+        mountPath: "/etc/docker/certs.d"
+
+volumes:
+  - name: gitea-runner-volume
+    persistentVolumeClaim:
+      claimName: gitea-runner-pvc
+  - name: docker-certs
+    emptyDir: {}
+  - name: private-registry-cert
+    secret:
+      secretName: registry-secret
+  - name: ca-certificates
+    emptyDir: {}
+  - name: private-docker-certs
+    emptyDir: {}
 
 imagePullSecrets: []
 nameOverride: ""

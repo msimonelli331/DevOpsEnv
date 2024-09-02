@@ -292,7 +292,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
     --set token=${token} \
     --set cacert=${cacert} \
     --set mkdirCommand="&mkdirCommand mkdir -p /etc/docker/certs.d/container.devops" \
-    --set cpCommand"&cpCommand cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops"
+    --set cpCommand="&cpCommand cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops"
    ```
 
 ### Buildkitd
