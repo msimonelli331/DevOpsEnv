@@ -273,7 +273,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 4. base64 encode the ca.crt created for the private container registry
 
    ```bash
-   cat ca.crt | base64 -w 0
+   cacert=$(cat ca.crt | base64 -w 0)
    ```
 
 5. Go to gitea webpage > Settings > Actions > Runners > Create new Runner > Copy the token
@@ -281,7 +281,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 6. base64 encode the runner token. **Note: You must use `echo -n` otherwise it will encode a newline character**
 
    ```bash
-   echo -n "<registration token from previous step>" | base64 -w 0
+   token=$(echo -n "<registration token from previous step>" | base64 -w 0)
    ```
 
 7. Install the helm chart, updating the hostname to match the selected domain name from previous steps. **Note: If you used a different domain name and/or host name for the container registry you have to change the entire init container command**
@@ -289,8 +289,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    ```bash
    helm install gitea-runner devopsenv/gitea-runner --create-namespace -n devops \
     --set gitURL="&gitURL http://git.devops" \
-    --set token=<base64 encoded registration token from previous step> \
-    --set cacert=<base64 encoded ca cert for private container registry> \
+    --set token=${token} \
+    --set cacert=${cacert} \
     --set mkdirCommand="&mkdirCommand mkdir -p /etc/docker/certs.d/container.devops" \
     --set cpCommand"&cpCommand cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops"
    ```
