@@ -270,12 +270,29 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    chown -R 1000:1000 /mnt/devops/gitea-runner
    ```
 
-4. Go to gitea webpage > Settings > Actions > Runners > Create new Runner > Copy the token
-
-5. Install the helm chart, updating the hostname to match the selected domain name from previous steps
+4. base64 encode the ca.crt created for the private container registry
 
    ```bash
-   helm install gitea-runner devopsenv/gitea-runner --create-namespace -n devops --set token=<registration token from previous step> --set gitURL="&gitURL http://git.devops"
+   cat ca.crt | base64 -w 0
+   ```
+
+5. Go to gitea webpage > Settings > Actions > Runners > Create new Runner > Copy the token
+
+6. base64 encode the runner token. **Note: You must use `echo -n` otherwise it will encode a newline character**
+
+   ```bash
+   echo -n "<registration token from previous step>" | base64 -w 0
+   ```
+
+7. Install the helm chart, updating the hostname to match the selected domain name from previous steps. **Note: If you used a different domain name and/or host name for the container registry you have to change the entire init container command**
+
+   ```bash
+   helm install gitea-runner devopsenv/gitea-runner --create-namespace -n devops \
+    --set gitURL="&gitURL http://git.devops" \
+    --set token=<base64 encoded registration token from previous step> \
+    --set cacert=<base64 encoded ca cert for private container registry> \
+    --set mkdirCommand="&mkdirCommand mkdir -p /etc/docker/certs.d/container.devops" \
+    --set cpCommand"&cpCommand cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops"
    ```
 
 ### Buildkitd
@@ -309,7 +326,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 2. Add the contents of the builder folder
 
-3. Update the ca.crt with the one generated earlier
+3. Follow the steps in the builder/README.md
 
 ## Resources
 
@@ -319,10 +336,27 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - https://kubernetes.github.io/ingress-nginx/deploy/#microk8s
 - https://microk8s.io/docs/addon-ingress
 - https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/
+- https://stackoverflow.com/questions/55958507/helm-templating-variables-in-values-yaml
+- https://github.com/coredns/helm/tree/coredns-1.24.5/charts/coredns/templates
+- https://github.com/canonical/microk8s-core-addons/blob/a8d3cd9e300d66012c01c1ecf364ddd23657b97c/addons/dns/coredns.yaml
+- https://github.com/k3s-io/k3s/blob/54e3b441477d76f822d42b56fe4e72dc79114b05/manifests/coredns.yaml
+- https://help.sonatype.com/en/installation-methods.html
+- https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
+- https://www.reddit.com/r/kubernetes/comments/ferapk/helm_set_namespace_for_subchart_dependencies/
+- https://stackoverflow.com/questions/68559495/helm-dependencies-with-different-namespaces
+- https://github.com/helm/helm/issues/5465
+- https://github.com/helm/helm/issues/3553
 - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
 - https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
 - https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
 - https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/dind-docker.yaml
+- https://hub.docker.com/r/gitea/act_runner
+- https://hub.docker.com/_/docker
+- https://docs.gitea.com/usage/actions/quickstart#use-actions
+- https://docs.gitea.com/usage/actions/act-runner#labels
+- https://forum.gitea.com/t/gitea-actions-run-a-job-from-a-custom-image/8905
+- https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
+- https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
 
 ## Notes
 
@@ -335,3 +369,17 @@ tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
 crictl -r unix:///var/snap/microk8s/common/run/containerd.sock rmi --prune
 ```
+
+VBoxGuestAdditions
+
+- After adding the ISO to the VM run:
+
+  ```bash
+  mkdir -p /mnt/cdrom
+  mount /dev/sr0 /mnt/cdrom
+  dnf install -y bzip2
+  /mnt/cdrom/VBoxLinuxAdditions.run
+  umount /mnt/cdrom
+  rm -rf /mnt/cdrom
+  reboot
+  ```

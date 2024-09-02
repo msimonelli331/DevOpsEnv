@@ -30,6 +30,12 @@ spec:
       serviceAccountName: {{ include "gitea-runner.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+      {{- range .Values.images }}
+        {{- with .initContainer }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
       containers:
       {{- $fullName := include "gitea-runner.fullname" . -}}
       {{- range .Values.images }}
@@ -77,6 +83,9 @@ spec:
           claimName: {{ $fullName }}
       - name: docker-certs
         emptyDir: {}
+      - name: private-registry-cert
+        secret:
+          secretName: registry-secret
       {{- end }}
       {{- end }}
       {{- with .nodeSelector }}

@@ -1,0 +1,45 @@
+name: Create and publish a local container
+
+on:
+  push:
+    branches:
+      - "*"
+
+env:
+  BUILDKIT_VERSION: "v0.15.2"
+  BUILDKIT_DAEMON: buildkitd.devops
+  REGISTRY: container.devops
+  IMAGE_NAME: builder
+  PLATFORMS: "linux/amd64"
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build container
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates
+          cp ca.crt /usr/local/share/ca-certificates
+          update-ca-certificates
+
+          docker login ${{ env.REGISTRY }} -u ${{ secrets.NEXUS_USERNAME }} -p ${{ secrets.NEXUS_PASSWORD }}
+          cp ~/.docker/config.json .
+
+          wget https://github.com/moby/buildkit/releases/download/${{ env.BUILDKIT_VERSION }}/buildkit-${{ env.BUILDKIT_VERSION }}.linux-amd64.tar.gz
+          tar xvf buildkit-${{ env.BUILDKIT_VERSION }}.linux-amd64.tar.gz -C /usr
+          rm -rf buildkit-${{ env.BUILDKIT_VERSION }}.linux-amd64.tar.gz
+
+          buildctl --addr tcp://${{ env.BUILDKIT_DAEMON }}:1234 build \
+            --frontend=dockerfile.v0 \
+            --local context=. \
+            --local dockerfile=. \
+            --output registry.insecure=true,type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,push=true

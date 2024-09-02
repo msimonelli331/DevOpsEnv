@@ -5,7 +5,10 @@
 replicaCount: 1
 
 token: ""
+cacert: ""
 gitURL: &gitURL http://git.devops
+mkdirCommand: &mkdirCommand mkdir -p /etc/docker/certs.d/container.devops
+cpCommand: &cpCommand cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops
 
 images:
   - name: runner
@@ -28,6 +31,8 @@ images:
         value: "1"
       - name: GITEA_INSTANCE_URL
         value: *gitURL
+      - name: GITEA_RUNNER_JOB_CONTAINER_FORCE_PULL
+        value: true
       - name: GITEA_RUNNER_REGISTRATION_TOKEN
         valueFrom:
           secretKeyRef:
@@ -42,6 +47,21 @@ images:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: "23.0.6-dind"
+    initContainer:
+      - name: init-daemon
+        image: "docker:23.0.6-dind"
+        imagePullPolicy: IfNotPresent
+        command:
+          [
+            cp /private-registry-certs/ca.crt /usr/local/share/ca-certificates/ca.crt,
+            update-ca-certificates,
+            *mkdirCommand,
+            *cpCommand,
+          ]
+        volumeMounts:
+          - name: private-registry-cert
+            readOnly: true
+            mountPath: "/private-registry-certs"
     env:
       - name: DOCKER_TLS_CERTDIR
         value: /certs
