@@ -7,8 +7,6 @@ replicaCount: 1
 token: ""
 cacert: ""
 gitURL: &gitURL http://git.devops
-mkdirCommand: &mkdirCommand mkdir -p /etc/docker/certs.d/container.devops
-cpCommand: &cpCommand cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops
 
 images:
   - name: runner
@@ -52,20 +50,13 @@ images:
       - name: init-daemon
         image: "docker:23.0.6-dind"
         imagePullPolicy: IfNotPresent
-        command:
-          [
+        command: [
             "sh",
             "-c",
-            "cp /private-registry-certs/ca.crt /usr/local/share/ca-certificates/ca.crt",
-            "sh",
-            "-c",
-            "update-ca-certificates",
-            "sh",
-            "-c",
-            *mkdirCommand,
-            "sh",
-            "-c",
-            *cpCommand,
+            "cp /private-registry-certs/ca.crt /usr/local/share/ca-certificates/ca.crt \
+            && update-ca-certificates \
+            && mkdir -p /etc/docker/certs.d/container.devops \
+            && cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops",
           ]
         volumeMounts:
           - name: private-registry-cert
@@ -75,6 +66,8 @@ images:
             mountPath: "/usr/local/share/ca-certificates"
           - name: private-docker-certs
             mountPath: "/etc/docker/certs.d"
+          - name: ssl-certs
+            mountPath: "/etc/ssl/certs"
     env:
       - name: DOCKER_TLS_CERTDIR
         value: /certs
@@ -87,20 +80,8 @@ images:
         mountPath: "/usr/local/share/ca-certificates"
       - name: private-docker-certs
         mountPath: "/etc/docker/certs.d"
-
-volumes:
-  - name: gitea-runner-volume
-    persistentVolumeClaim:
-      claimName: gitea-runner-pvc
-  - name: docker-certs
-    emptyDir: {}
-  - name: private-registry-cert
-    secret:
-      secretName: registry-secret
-  - name: ca-certificates
-    emptyDir: {}
-  - name: private-docker-certs
-    emptyDir: {}
+      - name: ssl-certs
+        mountPath: "/etc/ssl/certs"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -173,11 +154,21 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 # Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+volumes:
+  - name: gitea-runner-volume
+    persistentVolumeClaim:
+      claimName: gitea-runner-pvc
+  - name: docker-certs
+    emptyDir: {}
+  - name: private-registry-cert
+    secret:
+      secretName: registry-secret
+  - name: ca-certificates
+    emptyDir: {}
+  - name: private-docker-certs
+    emptyDir: {}
+  - name: ssl-certs
+    emptyDir: {}
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []

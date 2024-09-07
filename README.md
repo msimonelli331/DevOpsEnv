@@ -121,7 +121,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    microk8s disable dns
    ```
 
-2. Install coredns, be sure to change the IP to your machines IP
+2. Install coredns, be sure to change the IP to your machines IP. **Note: Change devops to match your desired domain name**
 
    ```bash
    helm template  coredns devopsenv/coredns --namespace kube-system --set vars.domain=devops --set vars.ip=127.0.0.1 > /var/snap/microk8s/common/addons/core/addons/dns/coredns.yaml
@@ -140,7 +140,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    microk8s enable dns
    ```
 
-5. Setup TLS for ingresses following steps [here](https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/)
+5. Setup TLS for ingresses following steps [here](https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/). **Note: Change .devops to match your selected domain name**
 
    ```bash
    openssl genrsa -aes256 -out ca.key 4096
@@ -186,10 +186,11 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    kubectl label nodes localhost.localdomain nexus=local
    ```
 
-3. Install the helm chart, updating the hostnames to match the selected domain name from previous steps
+3. Install the helm chart, updating the hostnames to match the selected domain name from previous steps. **Note: If you used a different domain name and/or host name you have to download and update the values file**
 
    ```bash
-   helm install nexus devopsenv/nexus --create-namespace -n devops --set nexusHostname="&nexusHostname nexus.devops" --set containerHostname="&containerHostname container.devops"
+   helm install nexus devopsenv/nexus --create-namespace -n devops \
+    -f nexus-values.yaml
    ```
 
 4. Get the default password
@@ -201,7 +202,41 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 5. Login to nexus with the password from the last step, change the password
 
 6. Create a docker hosted container repo
+
    1. Enable HTTP and use the port 8082
+
+7. Create the registry credential for this private repo. **Note: Change container.devops to match your selected host and domain name for the docker repo**
+
+   ```bash
+   kubectl create secret -n devops docker-registry regcred --docker-server=container.devops --docker-username=$NEXUS_USERNAME --docker-password=$NEXUS_PASSWORD
+   ```
+
+8. Add the container repo hostname to `etc/hosts`. **Note: Change container.devops to match your selected host and domain name for the docker repo**
+
+   - Append container.devops to the `127.0.0.1 localhost ... container.devops` line
+   - Do this on the server machine and your client machine
+
+9. Trust the certs we created for the private container registry. **Note: Change container.devops to match your selected host and domain name for the docker repo**
+
+   ```bash
+   cp ca.crt /etc/pki/ca-trust/source/anchors/
+   update-ca-trust
+
+   mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
+   cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
+   server = "https://container.devops"
+
+   [host."https://container.devops"]
+   capabilities = ["pull", "resolve"]
+   EOF
+   ```
+
+10. Restart microk8s
+
+    ```bash
+    microk8s stop
+    microk8s start
+    ```
 
 ### Gitea
 
@@ -231,10 +266,11 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    chown -R 1000:1000 /mnt/devops/gitea
    ```
 
-4. Install the helm chart, updating the hostname to match the selected domain name from previous steps
+4. Install the helm chart, updating the hostname to match the selected domain name from previous steps. **Note: If you used a different domain name and/or host name you have to download and update the values file**
 
    ```bash
-   helm install gitea devopsenv/gitea --create-namespace -n devops --set gitHostname="&gitHostname git.devops"
+   helm install gitea devopsenv/gitea --create-namespace -n devops \
+    -f gitea-values.yaml
    ```
 
 5. Navigate to http://git.devops/ for initial configuration
@@ -284,15 +320,13 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    token=$(echo -n "<registration token from previous step>" | base64 -w 0)
    ```
 
-7. Install the helm chart, updating the hostname to match the selected domain name from previous steps. **Note: If you used a different domain name and/or host name for the container registry you have to change the entire init container command**
+7. Install the helm chart, updating the hostname to match the selected domain name from previous steps. **Note: If you used a different domain name and/or host name you have to download and update the values file**
 
    ```bash
    helm install gitea-runner devopsenv/gitea-runner --create-namespace -n devops \
-    --set gitURL="&gitURL http://git.devops" \
     --set token=${token} \
     --set cacert=${cacert} \
-    --set mkdirCommand="&mkdirCommand mkdir -p /etc/docker/certs.d/container.devops" \
-    --set cpCommand="&cpCommand cp /private-registry-certs/ca.crt /etc/docker/certs.d/container.devops"
+    -f gitea-runner-values.yaml
    ```
 
 ### Buildkitd
@@ -356,11 +390,12 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - https://docs.gitea.com/usage/actions/act-runner#labels
 - https://forum.gitea.com/t/gitea-actions-run-a-job-from-a-custom-image/8905
 - https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
+- https://github.com/vegardit/docker-gitea-act-runner/blob/main/image/config.template.yaml
 - https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
 
 ## Notes
 
-Cleanup old images
+### Cleanup old images
 
 ```bash
 VERSION="v1.30.0"
@@ -370,7 +405,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 crictl -r unix:///var/snap/microk8s/common/run/containerd.sock rmi --prune
 ```
 
-VBoxGuestAdditions
+### VBoxGuestAdditions
 
 - After adding the ISO to the VM run:
 
