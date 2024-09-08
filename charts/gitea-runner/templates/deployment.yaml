@@ -54,6 +54,12 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if .service.enabled }}
+          ports:
+            - name: {{ $.Values.service.name }}
+              containerPort: {{ $.Values.service.containerPort }}
+              protocol: {{ $.Values.service.protocol }}
+          {{- end }}
           {{- with .livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

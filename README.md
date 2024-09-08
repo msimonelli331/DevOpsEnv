@@ -362,6 +362,68 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 3. Follow the steps in the builder/README.md
 
+### Wireguard VPN
+
+#### Preconditions
+
+1. Internet Connection
+
+#### Install Steps
+
+1. Setup a wireguard server on the DevOpsEnv machine
+
+   ```bash
+   dnf install wireguard-tools
+
+   wg genkey | tee /etc/wireguard/private.key
+   cat /etc/wireguard/private.key | wg pubkey | tee /etc/wireguard/public.key
+
+   cat > /etc/wireguard/wg0.conf << EOF
+   [Interface]
+   PrivateKey = $(cat /etc/wireguard/private.key)
+   Address = 192.168.<subnet>.1/24
+   ListenPort = 51820
+   SaveConfig = true
+   EOF
+   ```
+
+2. Setup the client config on the same machine
+
+   ```bash
+   wg genkey | tee /etc/wireguard/client-private.key
+   cat /etc/wireguard/client-private.key | wg pubkey | tee /etc/wireguard/client-public.key
+
+   cat > /etc/wireguard/wg-client.conf << EOF
+   [Interface]
+   PrivateKey = $(cat /etc/wireguard/client-private.key)
+   Address = 192.168.<subnet>.2/24
+
+   [Peer]
+   PublicKey = $(cat /etc/wireguard/public.key)
+   AllowedIPs = 192.168.<subnet>.0/24
+   Endpoint = <devopsenv public ip>:51820
+   EOF
+   ```
+
+3. Start the server
+
+   ```bash
+   wg set wg0 peer $(cat /etc/wireguard/client-public.key) allowed-ips 192.168.<subnet>.2
+
+   systemctl enable --now wg-quick@wg0.service
+   ```
+
+4. Create a Wireguard client using the files generated above
+
+5. (Optional) Setup a mobile WG client
+
+   ```bash
+   dnf install qrencode
+   qrencode -t png -o client-qr.png -r /etc/wireguard/wg-client.conf
+   ```
+
+   - Transfer the png to a windows machine, open it and scan it in the wireguard app
+
 ## Resources
 
 - https://rockylinux.org/download
@@ -392,6 +454,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
 - https://github.com/vegardit/docker-gitea-act-runner/blob/main/image/config.template.yaml
 - https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
+- https://www.wireguard.com/quickstart/
+- https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
+- https://www.cyberciti.biz/faq/how-to-generate-wireguard-qr-code-on-linux-for-mobile/
+- https://wireguard.how/client/ios/
 
 ## Notes
 

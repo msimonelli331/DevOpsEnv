@@ -41,6 +41,8 @@ images:
         mountPath: /certs
       - name: gitea-runner-volume
         mountPath: /data
+    service:
+      enabled: false
   - name: daemon
     repository: docker
     pullPolicy: IfNotPresent
@@ -82,6 +84,8 @@ images:
         mountPath: "/etc/docker/certs.d"
       - name: ssl-certs
         mountPath: "/etc/ssl/certs"
+    service:
+      enabled: true
 
 imagePullSecrets: []
 nameOverride: ""
@@ -103,7 +107,12 @@ podLabels: {}
 
 podSecurityContext: {}
 
-service: {}
+service:
+  type: ClusterIP
+  name: dockerd
+  containerPort: 2376
+  protocol: TCP
+  targetPort: 2376
 
 ingress:
   enabled: false
