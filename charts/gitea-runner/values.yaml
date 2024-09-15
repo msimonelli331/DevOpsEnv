@@ -21,6 +21,8 @@ images:
         "while ! nc -z localhost 2376 </dev/null; do echo 'waiting for docker daemon...'; sleep 5; done; /sbin/tini -- /opt/act/run.sh",
       ]
     env:
+      - name: CONFIG_FILE
+        value: /config.yaml
       - name: DOCKER_HOST
         value: tcp://localhost:2376
       - name: DOCKER_CERT_PATH
@@ -41,6 +43,8 @@ images:
         mountPath: /certs
       - name: gitea-runner-volume
         mountPath: /data
+      - name: runner-config
+        mountPath: /config.yaml
     service:
       enabled: false
   - name: daemon
@@ -178,6 +182,9 @@ volumes:
     emptyDir: {}
   - name: ssl-certs
     emptyDir: {}
+  - name: runner-config
+    configMap:
+      name: runner-config
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []

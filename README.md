@@ -453,6 +453,9 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - https://forum.gitea.com/t/gitea-actions-run-a-job-from-a-custom-image/8905
 - https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
 - https://github.com/vegardit/docker-gitea-act-runner/blob/main/image/config.template.yaml
+- https://gitea.com/gitea/act_runner/issues/329
+- https://gitea.com/gitea/act_runner/src/branch/main/internal/pkg/config/config.example.yaml
+- https://stackoverflow.com/questions/53429486/kubernetes-how-to-define-configmap-built-using-a-file-in-a-yaml
 - https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
 - https://www.wireguard.com/quickstart/
 - https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
