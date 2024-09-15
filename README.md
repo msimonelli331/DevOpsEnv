@@ -329,22 +329,6 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
     -f gitea-runner-values.yaml
    ```
 
-### Buildkitd
-
-#### Preconditions
-
-1. Internet Connection
-2. OS with Kubernetes and helm
-3. This helm repo added
-
-#### Install Steps
-
-4. Install the helm chart
-
-   ```bash
-   helm install buildkitd devopsenv/buildkitd --create-namespace -n devops
-   ```
-
 ### Builder
 
 #### Preconditions
@@ -426,41 +410,66 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 ## Resources
 
-- https://rockylinux.org/download
-- https://snapcraft.io/docs/installing-snap-on-rocky
-- https://microk8s.io/docs/getting-started
-- https://kubernetes.github.io/ingress-nginx/deploy/#microk8s
-- https://microk8s.io/docs/addon-ingress
-- https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/
-- https://stackoverflow.com/questions/55958507/helm-templating-variables-in-values-yaml
-- https://github.com/coredns/helm/tree/coredns-1.24.5/charts/coredns/templates
-- https://github.com/canonical/microk8s-core-addons/blob/a8d3cd9e300d66012c01c1ecf364ddd23657b97c/addons/dns/coredns.yaml
-- https://github.com/k3s-io/k3s/blob/54e3b441477d76f822d42b56fe4e72dc79114b05/manifests/coredns.yaml
-- https://help.sonatype.com/en/installation-methods.html
-- https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
-- https://www.reddit.com/r/kubernetes/comments/ferapk/helm_set_namespace_for_subchart_dependencies/
-- https://stackoverflow.com/questions/68559495/helm-dependencies-with-different-namespaces
-- https://github.com/helm/helm/issues/5465
-- https://github.com/helm/helm/issues/3553
-- https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
-- https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
-- https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
-- https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/dind-docker.yaml
-- https://hub.docker.com/r/gitea/act_runner
-- https://hub.docker.com/_/docker
-- https://docs.gitea.com/usage/actions/quickstart#use-actions
-- https://docs.gitea.com/usage/actions/act-runner#labels
-- https://forum.gitea.com/t/gitea-actions-run-a-job-from-a-custom-image/8905
-- https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
-- https://github.com/vegardit/docker-gitea-act-runner/blob/main/image/config.template.yaml
-- https://gitea.com/gitea/act_runner/issues/329
-- https://gitea.com/gitea/act_runner/src/branch/main/internal/pkg/config/config.example.yaml
-- https://stackoverflow.com/questions/53429486/kubernetes-how-to-define-configmap-built-using-a-file-in-a-yaml
-- https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
-- https://www.wireguard.com/quickstart/
-- https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
-- https://www.cyberciti.biz/faq/how-to-generate-wireguard-qr-code-on-linux-for-mobile/
-- https://wireguard.how/client/ios/
+- RockyLinux
+    - https://rockylinux.org/download
+    - https://snapcraft.io/docs/installing-snap-on-rocky
+- MicroK8s
+    - https://microk8s.io/docs/getting-started
+    - https://kubernetes.github.io/ingress-nginx/deploy/#microk8s
+    - https://microk8s.io/docs/addon-ingress
+    - https://stackoverflow.com/questions/55672498/kubernetes-cluster-stuck-on-removing-pv-pvc
+- SSL Certs
+    - https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/
+- CoreDNS
+    - https://stackoverflow.com/questions/55958507/helm-templating-variables-in-values-yaml
+    - https://github.com/coredns/helm/tree/coredns-1.24.5/charts/coredns/templates
+    - https://github.com/canonical/microk8s-core-addons/blob/a8d3cd9e300d66012c01c1ecf364ddd23657b97c/addons/dns/coredns.yaml
+    - https://github.com/k3s-io/k3s/blob/54e3b441477d76f822d42b56fe4e72dc79114b05/manifests/coredns.yaml
+    - https://www.reddit.com/r/kubernetes/comments/ferapk/helm_set_namespace_for_subchart_dependencies/
+    - https://stackoverflow.com/questions/68559495/helm-dependencies-with-different-namespaces
+    - https://github.com/helm/helm/issues/5465
+    - https://github.com/helm/helm/issues/3553
+- Nexus
+    - https://help.sonatype.com/en/installation-methods.html
+    - https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
+- Gitea
+    - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
+- Gitea Runner
+    - https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/dind-docker.yaml
+    - https://docs.docker.com/engine/security/certificates/
+    - https://hub.docker.com/r/gitea/act_runner
+    - https://hub.docker.com/_/docker
+    - https://forum.gitea.com/t/whats-the-idiomatic-way-of-using-gitea-hosted-container-images-in-actions-jobs/8566
+    - https://gitea.com/gitea/act_runner/issues/451
+    - https://docs.gitea.com/usage/actions/act-runner
+    - https://gitea.com/gitea/act_runner/search?q=forcePull
+- Gitea Actions
+    - https://docs.gitea.com/usage/actions/quickstart#use-actions
+    - https://docs.gitea.com/usage/actions/act-runner#labels
+    - https://forum.gitea.com/t/gitea-actions-run-a-job-from-a-custom-image/8905
+    - https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
+    - https://stackoverflow.com/questions/64033686/how-can-i-use-private-docker-image-in-github-actions
+    - https://github.com/vegardit/docker-gitea-act-runner/blob/main/image/config.template.yaml
+    - https://gitea.com/gitea/act_runner/issues/329
+    - https://gitea.com/gitea/act_runner/src/branch/main/internal/pkg/config/config.example.yaml
+    - https://stackoverflow.com/questions/53429486/kubernetes-how-to-define-configmap-built-using-a-file-in-a-yaml
+    - https://github.com/docker/setup-buildx-action
+    - https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
+    - https://github.com/docker/build-push-action
+    - https://github.com/docker/setup-buildx-action/issues/177
+- Helm
+    - https://helm.sh/docs/chart_template_guide/yaml_techniques/#yaml-anchors
+    - https://github.com/helm/helm/issues/9558
+- VirtualBox
+    - https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
+- Cleaning up images
+    - https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
+    - https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
+- Wireguard
+    - https://www.wireguard.com/quickstart/
+    - https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
+    - https://www.cyberciti.biz/faq/how-to-generate-wireguard-qr-code-on-linux-for-mobile/
+    - https://wireguard.how/client/ios/
 
 ## Notes
 

@@ -22,7 +22,7 @@ images:
       ]
     env:
       - name: CONFIG_FILE
-        value: /config.yaml
+        value: /runner-config/config.yaml
       - name: DOCKER_HOST
         value: tcp://localhost:2376
       - name: DOCKER_CERT_PATH
@@ -44,7 +44,7 @@ images:
       - name: gitea-runner-volume
         mountPath: /data
       - name: runner-config
-        mountPath: /config.yaml
+        mountPath: /runner-config
     service:
       enabled: false
   - name: daemon
