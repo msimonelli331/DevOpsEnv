@@ -162,6 +162,16 @@ entries:
   gitea-runner:
   - apiVersion: v2
     appVersion: 0.2.10
+    created: "2024-09-15T19:36:47.524087331Z"
+    description: Gitea Act Runner Helm chart for Kubernetes
+    digest: d5fb2e7fabc758d0fb838c173e3bed5a135876185df7eb46d4dc8479a614b708
+    name: gitea-runner
+    type: application
+    urls:
+    - https://github.com/msimonelli331/DevOpsEnv/releases/download/gitea-runner-0.1.7/gitea-runner-0.1.7.tgz
+    version: 0.1.7
+  - apiVersion: v2
+    appVersion: 0.2.10
     created: "2024-09-08T15:11:57.89851692Z"
     description: Gitea Act Runner Helm chart for Kubernetes
     digest: b3579592d5db408d0eabb2162b02d3762401b95e041b5167df43a76f2c1a8e9b
@@ -271,4 +281,4 @@ entries:
     urls:
     - https://github.com/msimonelli331/DevOpsEnv/releases/download/nexus-0.1.0/nexus-0.1.0.tgz
     version: 0.1.0
-generated: "2024-09-08T15:11:57.898567384Z"
+generated: "2024-09-15T19:36:47.524148475Z"
