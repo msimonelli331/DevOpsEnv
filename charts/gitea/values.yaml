@@ -69,6 +69,8 @@ ingress:
   enabled: true
   className: ""
   annotations:
+    cert-manager.io/issuer: ca-issuer
+    cert-manager.io/common-name: *gitHostname
   hosts:
     - host: *gitHostname
       paths:

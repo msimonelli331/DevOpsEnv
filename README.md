@@ -140,7 +140,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    microk8s enable dns
    ```
 
-5. Setup TLS for ingresses following steps [here](https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/). **Note: Change .devops to match your selected domain name**
+5. **DEPRECATED** Setup TLS for ingresses following steps [here](https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/). **Note: Change .devops to match your selected domain name**
 
    ```bash
    openssl genrsa -aes256 -out ca.key 4096
@@ -154,6 +154,38 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    openssl x509 -in server.crt -text -noout
 
    kubectl create secret tls ingress-tls -n devops --cert=server.crt --key=server.key
+   ```
+
+### Cert Manager
+
+#### Preconditions
+
+1. Internet Connection
+2. OS with Kubernetes and helm
+3. This helm repo added
+
+#### Install Steps
+
+1. Install the cert-manager helm chart
+
+   ```bash
+   curl -LO https://cert-manager.io/public-keys/cert-manager-keyring-2021-09-20-1020CF3C033D4F35BAE1C19E1226061C665DF13E.gpg
+
+   helm install \
+   cert-manager oci://quay.io/jetstack/charts/cert-manager \
+   --version v1.19.2 \
+   --namespace cert-manager \
+   --create-namespace \
+   --verify \
+   --keyring ./cert-manager-keyring-2021-09-20-1020CF3C033D4F35BAE1C19E1226061C665DF13E.gpg \
+   --set crds.enabled=true
+   ```
+
+2. Install the certs helm chart
+
+   ```bash
+   helm install certs devopsenv/certs --create-namespace -n devops \
+    -f values.yaml
    ```
 
 ### Nexus
@@ -354,122 +386,186 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 #### Install Steps
 
-1. Setup a wireguard server on the DevOpsEnv machine
+1.  Setup a wireguard server on the DevOpsEnv machine
 
-   ```bash
-   dnf install wireguard-tools
+    ```bash
+    dnf install wireguard-tools
 
-   wg genkey | tee /etc/wireguard/private.key
-   cat /etc/wireguard/private.key | wg pubkey | tee /etc/wireguard/public.key
+    wg genkey | tee /etc/wireguard/private.key
+    cat /etc/wireguard/private.key | wg pubkey | tee /etc/wireguard/public.key
 
-   cat > /etc/wireguard/wg0.conf << EOF
-   [Interface]
-   PrivateKey = $(cat /etc/wireguard/private.key)
-   Address = 192.168.<subnet>.1/24
-   ListenPort = 51820
-   SaveConfig = true
-   EOF
-   ```
+    cat > /etc/wireguard/wg0.conf << EOF
+    [Interface]
+    PrivateKey = $(cat /etc/wireguard/private.key)
+    Address = 192.168.<subnet>.1/24
+    ListenPort = 51820
+    SaveConfig = true
+    PostUP = /etc/wireguard/postup.sh
+    PostDown = /etc/wireguard/postdown.sh
+    EOF
+    ```
 
-2. Setup the client config on the same machine
+2.  Create post up and post down scripts, setting `nic` to the interface you want to forward wireguard traffic through
 
-   ```bash
-   wg genkey | tee /etc/wireguard/client-private.key
-   cat /etc/wireguard/client-private.key | wg pubkey | tee /etc/wireguard/client-public.key
+    - Option 1: Route traffic to a lan
 
-   cat > /etc/wireguard/wg-client.conf << EOF
-   [Interface]
-   PrivateKey = $(cat /etc/wireguard/client-private.key)
-   Address = 192.168.<subnet>.2/24
+      ```bash
+      cat > /etc/wireguard/postup.sh << EOF
+      nic=""
+      iptables -t nat -A POSTROUTING -o \${nic} -j MASQUERADE
+      iptables -A FORWARD -i \${nic} -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -A FORWARD -i wg0 -o \${nic} -j ACCEPT
 
-   [Peer]
-   PublicKey = $(cat /etc/wireguard/public.key)
-   AllowedIPs = 192.168.<subnet>.0/24
-   Endpoint = <devopsenv public ip>:51820
-   EOF
-   ```
+      iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE
+      iptables -A FORWARD -i wg0 -o \${nic} -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -A FORWARD -i \${nic} -o wg0 -j ACCEPT
+      EOF
+      chmod +x /etc/wireguard/postup.sh
+      ```
 
-3. Start the server
+      ```bash
+      cat > /etc/wireguard/postdown.sh << EOF
+      nic=""
+      iptables -t nat -D POSTROUTING -o \${nic} -j MASQUERADE
+      iptables -D FORWARD -i \${nic} -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -D FORWARD -i wg0 -o \${nic} -j ACCEPT
 
-   ```bash
-   wg set wg0 peer $(cat /etc/wireguard/client-public.key) allowed-ips 192.168.<subnet>.2
+      iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE
+      iptables -D FORWARD -i wg0 -o \${nic} -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -D FORWARD -i \${nic} -o wg0 -j ACCEPT
+      EOF
+      chmod +x /etc/wireguard/postdown.sh
+      ```
 
-   systemctl enable --now wg-quick@wg0.service
-   ```
+    - Option 2: Route traffic through the internet connected nic
 
-4. Create a Wireguard client using the files generated above
+      ```bash
+      cat > /etc/wireguard/postup.sh << EOF
+      nic=""
+      iptables -A FORWARD -i wg0 -j ACCEPT
+      iptables -t nat -A POSTROUTING -o \${nic} -j MASQUERADE
+      EOF
+      chmod +x /etc/wireguard/postup.sh
+      ```
 
-5. (Optional) Setup a mobile WG client
+      ```bash
+      cat > /etc/wireguard/postdown.sh << EOF
+      nic=""
+      iptables -D FORWARD -i wg0 -j ACCEPT
+      iptables -t nat -D POSTROUTING -o \${nic} -j MASQUERADE
+      EOF
+      chmod +x /etc/wireguard/postdown.sh
+      ```
 
-   ```bash
-   dnf install qrencode
-   qrencode -t png -o client-qr.png -r /etc/wireguard/wg-client.conf
-   ```
+3.  Setup the client config on the same machine
 
-   - Transfer the png to a windows machine, open it and scan it in the wireguard app
+    ```bash
+    wg genkey | tee /etc/wireguard/client-private.key
+    cat /etc/wireguard/client-private.key | wg pubkey | tee /etc/wireguard/client-public.key
+
+    cat > /etc/wireguard/wg-client.conf << EOF
+    [Interface]
+    PrivateKey = $(cat /etc/wireguard/client-private.key)
+    Address = 192.168.<subnet>.2/24
+    DNS = 8.8.8.8
+
+    [Peer]
+    PublicKey = $(cat /etc/wireguard/public.key)
+    AllowedIPs = 0.0.0.0/0, ::/0
+    Endpoint = <devopsenv public ip>:51820
+    PersistentKeepalive = 5
+    EOF
+    ```
+
+4.  Start the server
+
+    ```bash
+    systemctl enable --now wg-quick@wg0.service
+
+    wg set wg0 peer $(cat /etc/wireguard/client-public.key) allowed-ips 192.168.<subnet>.2
+    ```
+
+5.  Create a Wireguard client using the files generated above
+
+6.  (Optional) Setup a mobile WG client
+
+    ```bash
+    dnf install qrencode
+    qrencode -t png -o client-qr.png -r /etc/wireguard/wg-client.conf
+    ```
+
+    - Transfer the png to a windows machine, open it and scan it in the wireguard app
 
 ## Resources
 
 - RockyLinux
-    - https://rockylinux.org/download
-    - https://snapcraft.io/docs/installing-snap-on-rocky
+  - https://rockylinux.org/download
+  - https://snapcraft.io/docs/installing-snap-on-rocky
 - MicroK8s
-    - https://microk8s.io/docs/getting-started
-    - https://kubernetes.github.io/ingress-nginx/deploy/#microk8s
-    - https://microk8s.io/docs/addon-ingress
-    - https://stackoverflow.com/questions/55672498/kubernetes-cluster-stuck-on-removing-pv-pvc
+  - https://microk8s.io/docs/getting-started
+  - https://kubernetes.github.io/ingress-nginx/deploy/#microk8s
+  - https://microk8s.io/docs/addon-ingress
+  - https://stackoverflow.com/questions/55672498/kubernetes-cluster-stuck-on-removing-pv-pvc
 - SSL Certs
-    - https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/
+  - https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/
 - CoreDNS
-    - https://stackoverflow.com/questions/55958507/helm-templating-variables-in-values-yaml
-    - https://github.com/coredns/helm/tree/coredns-1.24.5/charts/coredns/templates
-    - https://github.com/canonical/microk8s-core-addons/blob/a8d3cd9e300d66012c01c1ecf364ddd23657b97c/addons/dns/coredns.yaml
-    - https://github.com/k3s-io/k3s/blob/54e3b441477d76f822d42b56fe4e72dc79114b05/manifests/coredns.yaml
-    - https://www.reddit.com/r/kubernetes/comments/ferapk/helm_set_namespace_for_subchart_dependencies/
-    - https://stackoverflow.com/questions/68559495/helm-dependencies-with-different-namespaces
-    - https://github.com/helm/helm/issues/5465
-    - https://github.com/helm/helm/issues/3553
+  - https://stackoverflow.com/questions/55958507/helm-templating-variables-in-values-yaml
+  - https://github.com/coredns/helm/tree/coredns-1.24.5/charts/coredns/templates
+  - https://github.com/canonical/microk8s-core-addons/blob/a8d3cd9e300d66012c01c1ecf364ddd23657b97c/addons/dns/coredns.yaml
+  - https://github.com/k3s-io/k3s/blob/54e3b441477d76f822d42b56fe4e72dc79114b05/manifests/coredns.yaml
+  - https://www.reddit.com/r/kubernetes/comments/ferapk/helm_set_namespace_for_subchart_dependencies/
+  - https://stackoverflow.com/questions/68559495/helm-dependencies-with-different-namespaces
+  - https://github.com/helm/helm/issues/5465
+  - https://github.com/helm/helm/issues/3553
 - Nexus
-    - https://help.sonatype.com/en/installation-methods.html
-    - https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
+  - https://help.sonatype.com/en/installation-methods.html
+  - https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
 - Gitea
-    - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
+  - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
 - Gitea Runner
-    - https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/dind-docker.yaml
-    - https://docs.docker.com/engine/security/certificates/
-    - https://hub.docker.com/r/gitea/act_runner
-    - https://hub.docker.com/_/docker
-    - https://forum.gitea.com/t/whats-the-idiomatic-way-of-using-gitea-hosted-container-images-in-actions-jobs/8566
-    - https://gitea.com/gitea/act_runner/issues/451
-    - https://docs.gitea.com/usage/actions/act-runner
-    - https://gitea.com/gitea/act_runner/search?q=forcePull
+  - https://gitea.com/gitea/act_runner/src/branch/main/examples/kubernetes/dind-docker.yaml
+  - https://docs.docker.com/engine/security/certificates/
+  - https://hub.docker.com/r/gitea/act_runner
+  - https://hub.docker.com/_/docker
+  - https://forum.gitea.com/t/whats-the-idiomatic-way-of-using-gitea-hosted-container-images-in-actions-jobs/8566
+  - https://gitea.com/gitea/act_runner/issues/451
+  - https://docs.gitea.com/usage/actions/act-runner
+  - https://gitea.com/gitea/act_runner/search?q=forcePull
 - Gitea Actions
-    - https://docs.gitea.com/usage/actions/quickstart#use-actions
-    - https://docs.gitea.com/usage/actions/act-runner#labels
-    - https://forum.gitea.com/t/gitea-actions-run-a-job-from-a-custom-image/8905
-    - https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
-    - https://stackoverflow.com/questions/64033686/how-can-i-use-private-docker-image-in-github-actions
-    - https://github.com/vegardit/docker-gitea-act-runner/blob/main/image/config.template.yaml
-    - https://gitea.com/gitea/act_runner/issues/329
-    - https://gitea.com/gitea/act_runner/src/branch/main/internal/pkg/config/config.example.yaml
-    - https://stackoverflow.com/questions/53429486/kubernetes-how-to-define-configmap-built-using-a-file-in-a-yaml
-    - https://github.com/docker/setup-buildx-action
-    - https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
-    - https://github.com/docker/build-push-action
-    - https://github.com/docker/setup-buildx-action/issues/177
+  - https://docs.gitea.com/usage/actions/quickstart#use-actions
+  - https://docs.gitea.com/usage/actions/act-runner#labels
+  - https://forum.gitea.com/t/gitea-actions-run-a-job-from-a-custom-image/8905
+  - https://forum.gitea.com/t/using-docker-images-from-private-repository-to-run-actions-in/8571/7
+  - https://stackoverflow.com/questions/64033686/how-can-i-use-private-docker-image-in-github-actions
+  - https://github.com/vegardit/docker-gitea-act-runner/blob/main/image/config.template.yaml
+  - https://gitea.com/gitea/act_runner/issues/329
+  - https://gitea.com/gitea/act_runner/src/branch/main/internal/pkg/config/config.example.yaml
+  - https://stackoverflow.com/questions/53429486/kubernetes-how-to-define-configmap-built-using-a-file-in-a-yaml
+  - https://github.com/docker/setup-buildx-action
+  - https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
+  - https://github.com/docker/build-push-action
+  - https://github.com/docker/setup-buildx-action/issues/177
+  - https://github.com/kubernetes/kubernetes/issues/23404#issuecomment-203404986
 - Helm
-    - https://helm.sh/docs/chart_template_guide/yaml_techniques/#yaml-anchors
-    - https://github.com/helm/helm/issues/9558
+  - https://helm.sh/docs/chart_template_guide/yaml_techniques/#yaml-anchors
+  - https://github.com/helm/helm/issues/9558
 - VirtualBox
-    - https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
+  - https://ciq.com/blog/how-to-install-the-virtualbox-guest-additions-so-your-rocky-linux-vms-with-a-gui-can-benefit-from-screen-resizing/
 - Cleaning up images
-    - https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
-    - https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
+  - https://discuss.kubernetes.io/t/microk8s-images-prune-utility-for-production-servers/15874
+  - https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md
 - Wireguard
-    - https://www.wireguard.com/quickstart/
-    - https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
-    - https://www.cyberciti.biz/faq/how-to-generate-wireguard-qr-code-on-linux-for-mobile/
-    - https://wireguard.how/client/ios/
+  - https://www.wireguard.com/quickstart/
+  - https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
+  - https://www.cyberciti.biz/faq/how-to-generate-wireguard-qr-code-on-linux-for-mobile/
+  - https://wireguard.how/client/ios/
+  - https://serverfault.com/questions/1159572/route-all-traffic-through-wireguard
+  - https://ubuntu.com/server/docs/common-tasks-in-wireguard-vpn
+  - https://www.reddit.com/r/WireGuard/comments/g97zkf/wgquick_and_hot_reloadsync/
+  - https://gist.github.com/nealfennimore/92d571db63404e7ddfba660646ceaf0d
+  - https://unix.stackexchange.com/questions/735074/wireguard-how-to-route-internet-traffic-through-a-mobile-peer
+- Cert Manager
+  - https://cert-manager.io/docs/installation/helm/
 
 ## Notes
 

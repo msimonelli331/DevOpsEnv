@@ -62,6 +62,8 @@ ingress:
   className: ""
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "30G"
+    cert-manager.io/issuer: ca-issuer
+    cert-manager.io/common-name: *nexusHostname
   hosts:
     - host: *nexusHostname
       paths:
