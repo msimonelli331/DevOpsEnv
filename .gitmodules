@@ -1,0 +1,3 @@
+[submodule "coredns/coredns"]
+	path = coredns/coredns
+	url = https://github.com/coredns/coredns.git
