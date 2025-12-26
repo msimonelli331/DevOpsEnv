@@ -3,8 +3,8 @@ ARG BASE=gcr.io/distroless/static-debian12:nonroot
 
 FROM golang:1.24 AS compiler
 
-RUN mkdir -p /go/src/github.com/coredns
-COPY coredns /go/src/github.com/coredns/
+RUN mkdir -p /go/src/github.com/coredns/coredns
+COPY coredns /go/src/github.com/coredns/coredns
 WORKDIR /go/src/github.com/coredns/coredns
 RUN ls -lah \
     && GOFLAGS="-buildvcs=false" make gen && GOFLAGS="-buildvcs=false" make \
