@@ -3,16 +3,17 @@ ARG BASE=gcr.io/distroless/static-debian12:nonroot
 
 FROM golang:1.24 AS compiler
 
-COPY coredns/* /
-RUN pwd &&  ls -lah /
+RUN mkdir -p /go/src/github.com/coredns
+COPY coredns /go/src/github.com/coredns/
+WORKDIR /go/src/github.com/coredns/coredns
 ENV GOFLAGS="-buildvcs=false"
-RUN make gen && make
+RUN make gen && make && ls -lah && ls -lah /
 
 FROM --platform=$BUILDPLATFORM ${DEBIAN_IMAGE} AS build
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qq update \
     && apt-get -qq --no-install-recommends install libcap2-bin
-COPY --from=compiler /coredns /coredns
+COPY --from=compiler /go/src/github.com/coredns/coredns/coredns /coredns
 RUN setcap cap_net_bind_service=+ep /coredns
 
 FROM ${BASE}

@@ -184,8 +184,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 2. Install the certs helm chart
 
    ```bash
-   helm install certs devopsenv/certs --create-namespace -n devops \
-    -f values.yaml
+   helm install certs devopsenv/certs --create-namespace -n devops
    ```
 
 ### Nexus
@@ -250,8 +249,25 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 9. Trust the certs we created for the private container registry. **Note: Change container.devops to match your selected host and domain name for the docker repo**
 
+   **DEPRECATED**
+
    ```bash
    cp ca.crt /etc/pki/ca-trust/source/anchors/
+   update-ca-trust
+
+   mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
+   cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
+   server = "https://container.devops"
+
+   [host."https://container.devops"]
+   capabilities = ["pull", "resolve"]
+   EOF
+   ```
+
+   **UPDATED**
+
+   ```bash
+   kubectl get secret -n devops devops-ca -o jsonpath='{.data.tls\.crt}' | base64 -d > /etc/pki/ca-trust/source/anchors/ca.crt
    update-ca-trust
 
    mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
@@ -566,6 +582,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
   - https://unix.stackexchange.com/questions/735074/wireguard-how-to-route-internet-traffic-through-a-mobile-peer
 - Cert Manager
   - https://cert-manager.io/docs/installation/helm/
+  - https://kubernetes.io/docs/concepts/configuration/secret/
 
 ## Notes
 
