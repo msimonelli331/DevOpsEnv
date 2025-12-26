@@ -373,7 +373,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    cacert=$(cat /etc/pki/ca-trust/source/anchors/ca.crt | base64 -w 0)
    ```
 
-5. Go to gitea webpage > Settings > Actions > Runners > Create new Runner > Copy the token
+5. Go to gitea webpage > Site Administration > Actions > Runners > Create new Runner > Copy the token
 
 6. base64 encode the runner token. **Note: You must use `echo -n` otherwise it will encode a newline character**
 
@@ -388,6 +388,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
     --set token=${token} \
     -f gitea-runner-values.yaml
    ```
+
+**Note: If creating a new runner you must delete the .runner file: rm /mnt/devops/gitea-runner/.runner**
 
 ### Builder
 
@@ -566,6 +568,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
   - https://gitea.com/gitea/act_runner/issues/451
   - https://docs.gitea.com/usage/actions/act-runner
   - https://gitea.com/gitea/act_runner/search?q=forcePull
+  - https://github.com/go-gitea/gitea/issues/32029
+  - https://forum.gitea.com/t/steps-for-act-runner-with-self-signed-root-ca/10334
 - Gitea Actions
   - https://docs.gitea.com/usage/actions/quickstart#use-actions
   - https://docs.gitea.com/usage/actions/act-runner#labels
