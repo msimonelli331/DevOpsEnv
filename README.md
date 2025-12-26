@@ -251,39 +251,41 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    - Append container.devops to the `127.0.0.1 localhost ... container.devops` line
    - Do this on the server machine and your client machine
 
-9. Trust the certs we created for the private container registry. **Note: Change container.devops to match your selected host and domain name for the docker repo**
+9. Navigate to http://nexus.devops/ and enable the Docker Bearer Token Realm in Nexus Security->Realms Tab
 
-   **DEPRECATED**
+10. Trust the certs we created for the private container registry. **Note: Change container.devops to match your selected host and domain name for the docker repo**
 
-   ```bash
-   cp ca.crt /etc/pki/ca-trust/source/anchors/
-   update-ca-trust
+    **DEPRECATED**
 
-   mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
-   cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
-   server = "https://container.devops"
+    ```bash
+    cp ca.crt /etc/pki/ca-trust/source/anchors/
+    update-ca-trust
 
-   [host."https://container.devops"]
-   capabilities = ["pull", "resolve"]
-   EOF
-   ```
+    mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
+    cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
+    server = "https://container.devops"
 
-   **UPDATED**
+    [host."https://container.devops"]
+    capabilities = ["pull", "resolve"]
+    EOF
+    ```
 
-   ```bash
-   kubectl get secret -n devops devops-ca -o jsonpath='{.data.tls\.crt}' | base64 -d > /etc/pki/ca-trust/source/anchors/ca.crt
-   update-ca-trust
+    **UPDATED**
 
-   mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
-   cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
-   server = "https://container.devops"
+    ```bash
+    kubectl get secret -n devops devops-ca -o jsonpath='{.data.tls\.crt}' | base64 -d > /etc/pki/ca-trust/source/anchors/ca.crt
+    update-ca-trust
 
-   [host."https://container.devops"]
-   capabilities = ["pull", "resolve"]
-   EOF
-   ```
+    mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
+    cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
+    server = "https://container.devops"
 
-10. Restart microk8s
+    [host."https://container.devops"]
+    capabilities = ["pull", "resolve"]
+    EOF
+    ```
+
+11. Restart microk8s
 
     ```bash
     microk8s stop
@@ -337,6 +339,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 6. Navigate to http://git.devops/ for initial configuration
    1. Configure the database as sqlite3
    2. Add an admin user
+   3. Add the following secrets in the Settings > Actions > Secrets
+      - NEXUS_USERNAME
+      - NEXUS_PASSWORD
+      - OLLAMA_IP
 
 ### Gitea Runner
 
@@ -387,6 +393,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    helm install gitea-runner devopsenv/gitea-runner --create-namespace -n devops \
     --set token=${token} \
     -f gitea-runner-values.yaml
+   ```
+
+   ```bash
+   helm upgrade gitea-runner devopsenv/gitea-runner -n devops
    ```
 
 **Note: If creating a new runner you must delete the .runner file: rm /mnt/devops/gitea-runner/.runner**
@@ -557,6 +567,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
   - https://help.sonatype.com/en/installation-methods.html
   - https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
   - https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+  - https://community.sonatype.com/t/docker-login-401-unauthorized/1345
 - Gitea
   - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
 - Gitea Runner
