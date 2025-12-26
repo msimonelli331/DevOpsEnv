@@ -4,6 +4,7 @@ ARG BASE=gcr.io/distroless/static-debian12:nonroot
 FROM golang:1.24 AS compiler
 
 COPY coredns/* /
+RUN pwd &&  ls -lah /
 ENV GOFLAGS="-buildvcs=false"
 RUN make gen && make
 
