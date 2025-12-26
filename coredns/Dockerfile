@@ -6,9 +6,9 @@ FROM golang:1.24 AS compiler
 RUN mkdir -p /go/src/github.com/coredns/coredns
 COPY coredns /go/src/github.com/coredns/coredns
 WORKDIR /go/src/github.com/coredns/coredns
-RUN ls -lah \
-    && GOFLAGS="-buildvcs=false" make gen && GOFLAGS="-buildvcs=false" make \
-    && ls -lah && ls -lah /
+ENV COREDNS_PLUGINS=k8s_gateway:github.com/ori-edge/k8s_gateway
+ENV GOFLAGS="-buildvcs=false"
+RUN make gen && make
 
 FROM --platform=$BUILDPLATFORM ${DEBIAN_IMAGE} AS build
 ARG DEBIAN_FRONTEND=noninteractive

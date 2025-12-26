@@ -17,5 +17,9 @@ data:
     *.{{ .Values.vars.domain }}.   IN    A       {{ .Values.vars.ip }}
   ingress.server: |
     {{ .Values.vars.domain }} {
+      acl {
+        allow net {{ .Values.vars.clusterCidr }} {{ .Values.vars.serviceCidr }}
+        block
+      }
       file /etc/coredns/custom/ingress.db
     }

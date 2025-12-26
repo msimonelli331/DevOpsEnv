@@ -533,6 +533,12 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
   - https://stackoverflow.com/questions/68559495/helm-dependencies-with-different-namespaces
   - https://github.com/helm/helm/issues/5465
   - https://github.com/helm/helm/issues/3553
+  - New
+    - https://github.com/coredns/coredns/tree/v1.13.2?tab=readme-ov-file#compilation-from-source
+    - https://github.com/coredns/coredns/tree/v1.13.2?tab=readme-ov-file#compilation-with-docker
+    - https://coredns.io/explugins/k8s_gateway/
+    - https://github.com/ori-edge/k8s_gateway
+    - https://github.com/ori-edge/k8s_gateway/blob/master/examples/install-clusterwide.yml
 - Nexus
   - https://help.sonatype.com/en/installation-methods.html
   - https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml

@@ -1,6 +1,8 @@
 vars:
   domain: devops
   ip: 127.0.0.1
+  clusterCidr: 10.1.0.0/16
+  serviceCidr: 10.152.183.0/24
 
 coredns:
   image:
