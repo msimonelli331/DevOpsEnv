@@ -5,7 +5,6 @@
 replicaCount: 1
 
 token: ""
-cacert: ""
 gitURL: &gitURL http://git.devops
 
 images:
@@ -45,6 +44,8 @@ images:
         mountPath: /data
       - name: runner-config
         mountPath: /runner-config
+      - name: ssl-certs
+        mountPath: "/etc/ssl/certs"
     service:
       enabled: false
   - name: daemon
@@ -82,8 +83,6 @@ images:
     volumeMounts:
       - name: docker-certs
         mountPath: /certs
-      - name: ca-certificates
-        mountPath: "/usr/local/share/ca-certificates"
       - name: private-docker-certs
         mountPath: "/etc/docker/certs.d"
       - name: ssl-certs
@@ -175,7 +174,7 @@ volumes:
     emptyDir: {}
   - name: private-registry-cert
     secret:
-      secretName: registry-secret
+      secretName: devops-ca
   - name: ca-certificates
     emptyDir: {}
   - name: private-docker-certs

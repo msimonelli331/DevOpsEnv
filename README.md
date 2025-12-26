@@ -124,7 +124,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 2. Install coredns, be sure to change the IP to your machines IP. **Note: Change devops to match your desired domain name**
 
    ```bash
-   helm template  coredns devopsenv/coredns --namespace kube-system --set vars.domain=devops --set vars.ip=127.0.0.1 > /var/snap/microk8s/common/addons/core/addons/dns/coredns.yaml
+   helm template coredns devopsenv/coredns --namespace kube-system --set vars.domain=devops --set vars.ip=127.0.0.1 > /var/snap/microk8s/common/addons/core/addons/dns/coredns.yaml
    ```
 
 3. Update `/var/snap/microk8s/common/addons/core/addons/dns/coredns.yaml` to add `namespace: kube-system` to all namespaced resources
@@ -195,7 +195,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 2. OS with Kubernetes and helm
 3. This helm repo added
 4. CoreDNS updated to resolve ingress hostnames
-   - A separate hostname for the cotnainer repo is required to docker login
+   - A separate hostname for the container repo is required to docker login
    - You cannot login to nexus.devops/repository/container
      - docker strips the /'s and just tries to login to nexus.devops
    - So the container repo needs its own hostname
@@ -222,6 +222,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    ```bash
    helm install nexus devopsenv/nexus --create-namespace -n devops \
     -f nexus-values.yaml
+   ```
+
+   ```bash
+   helm upgrade nexus devopsenv/nexus -n devops
    ```
 
 4. Get the default password
@@ -321,7 +325,16 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
     -f gitea-values.yaml
    ```
 
-5. Navigate to http://git.devops/ for initial configuration
+   ```bash
+   helm upgrade gitea devopsenv/gitea -n devops
+   ```
+
+5. Add the gitea hostname to `etc/hosts`. **Note: Change git.devops to match your selected host and domain name for the gitea server**
+
+   - Append git.devops to the `127.0.0.1 localhost ... git.devops` line
+   - Do this on the server machine and your client machine
+
+6. Navigate to http://git.devops/ for initial configuration
    1. Configure the database as sqlite3
    2. Add an admin user
 
@@ -354,10 +367,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    chown -R 1000:1000 /mnt/devops/gitea-runner
    ```
 
-4. base64 encode the ca.crt created for the private container registry
+4. **DEPRECATED** base64 encode the ca.crt created for the private container registry
 
    ```bash
-   cacert=$(cat ca.crt | base64 -w 0)
+   cacert=$(cat /etc/pki/ca-trust/source/anchors/ca.crt | base64 -w 0)
    ```
 
 5. Go to gitea webpage > Settings > Actions > Runners > Create new Runner > Copy the token
@@ -373,7 +386,6 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    ```bash
    helm install gitea-runner devopsenv/gitea-runner --create-namespace -n devops \
     --set token=${token} \
-    --set cacert=${cacert} \
     -f gitea-runner-values.yaml
    ```
 
@@ -542,6 +554,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 - Nexus
   - https://help.sonatype.com/en/installation-methods.html
   - https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
+  - https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
 - Gitea
   - https://docs.gitea.com/installation/install-with-docker#configure-the-user-inside-gitea-using-environment-variables
 - Gitea Runner
