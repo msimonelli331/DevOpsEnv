@@ -76,7 +76,7 @@ ingress:
           pathType: Prefix
           port: 8082
   tls:
-    - secretName: ingress-tls
+    - secretName: nexus
       hosts:
         - *nexusHostname
         - *containerHostname

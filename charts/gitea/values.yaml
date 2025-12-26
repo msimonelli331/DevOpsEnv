@@ -77,6 +77,10 @@ ingress:
         - path: /
           pathType: Prefix
           port: 3000
+  tls:
+    - secretName: gitea
+      hosts:
+        - *gitHostname
 
 resources:
   {}

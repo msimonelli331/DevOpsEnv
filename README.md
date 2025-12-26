@@ -582,6 +582,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
   - https://unix.stackexchange.com/questions/735074/wireguard-how-to-route-internet-traffic-through-a-mobile-peer
 - Cert Manager
   - https://cert-manager.io/docs/installation/helm/
+  - https://cert-manager.io/docs/usage/ingress/
   - https://kubernetes.io/docs/concepts/configuration/secret/
 
 ## Notes
