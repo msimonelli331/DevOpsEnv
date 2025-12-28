@@ -21,6 +21,7 @@ data:
             resources Ingress Service
             fallthrough
         }
+        forward . /etc/resolv.conf
         cache 30
         loop
         reload
@@ -49,13 +50,6 @@ rules:
     verbs:
       - list
       - watch
-  - apiGroups:
-      - gateway.networking.k8s.io
-    resources:
-      - "*"
-    verbs:
-      - watch
-      - list
 ---
 # Source: coredns/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -82,6 +76,7 @@ spec:
   ports:
     - { port: 53, protocol: UDP, name: udp-53 }
   type: LoadBalancer
+  loadBalancerIP: {{ .Values.vars.loadBalancerIP }}
 ---
 apiVersion: apps/v1
 kind: Deployment

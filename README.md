@@ -187,6 +187,33 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    helm install certs devopsenv/certs --create-namespace -n devops
    ```
 
+### Loadbalancer
+
+#### Preconditions
+
+1. Internet Connection
+2. OS with Kubernetes
+
+#### Install Steps
+
+1. Enable the metallb loadbalancer
+
+   ```bash
+   microk8s enable metallb
+   ```
+
+2. When prompted input an ip range that is in your subnet
+
+3. Get the ip addr of the excordns service, copy the EXTERNAL IP for the next step
+
+   ```bash
+   kubectl get svc external-dns -n kube-system
+   ```
+
+4. Edit /etc/resolv.conf or a static ip config and paste in the IP from the previous step as the DNS server
+
+Your host should now be able to resolve Ingress hostnames and the internet
+
 ### Nexus
 
 #### Preconditions
@@ -288,6 +315,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 11. Restart microk8s
 
     ```bash
+    systemctl start snapd
     microk8s stop
     microk8s start
     ```
@@ -430,6 +458,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
     ```bash
     dnf install wireguard-tools
+    sysctl -w net.ipv4.ip_forward=1
+    systemctl disable --now firewalld
 
     wg genkey | tee /etc/wireguard/private.key
     cat /etc/wireguard/private.key | wg pubkey | tee /etc/wireguard/public.key
@@ -445,7 +475,27 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
     EOF
     ```
 
-2.  Create post up and post down scripts, setting `nic` to the interface you want to forward wireguard traffic through
+2.  Setup the client config on the same machine
+
+    ```bash
+    wg genkey | tee /etc/wireguard/client-private.key
+    cat /etc/wireguard/client-private.key | wg pubkey | tee /etc/wireguard/client-public.key
+
+    cat > /etc/wireguard/wg-client.conf << EOF
+    [Interface]
+    PrivateKey = $(cat /etc/wireguard/client-private.key)
+    Address = 192.168.<subnet>.2/24
+    DNS = 8.8.8.8
+
+    [Peer]
+    PublicKey = $(cat /etc/wireguard/public.key)
+    AllowedIPs = 0.0.0.0/0, ::/0
+    Endpoint = <devopsenv public ip>:51820
+    PersistentKeepalive = 5
+    EOF
+    ```
+
+3.  Create post up and post down scripts, setting `nic` to the interface you want to forward wireguard traffic through
 
     - Option 1: Route traffic to a lan
 
@@ -459,6 +509,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
       iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE
       iptables -A FORWARD -i wg0 -o \${nic} -m state --state RELATED,ESTABLISHED -j ACCEPT
       iptables -A FORWARD -i \${nic} -o wg0 -j ACCEPT
+
+      wg set wg0 peer $(cat /etc/wireguard/client-public.key) allowed-ips 192.168.<subnet>.2/32
       EOF
       chmod +x /etc/wireguard/postup.sh
       ```
@@ -484,6 +536,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
       nic=""
       iptables -A FORWARD -i wg0 -j ACCEPT
       iptables -t nat -A POSTROUTING -o \${nic} -j MASQUERADE
+
+      wg set wg0 peer $(cat /etc/wireguard/client-public.key) allowed-ips 192.168.<subnet>.2/32
       EOF
       chmod +x /etc/wireguard/postup.sh
       ```
@@ -497,32 +551,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
       chmod +x /etc/wireguard/postdown.sh
       ```
 
-3.  Setup the client config on the same machine
-
-    ```bash
-    wg genkey | tee /etc/wireguard/client-private.key
-    cat /etc/wireguard/client-private.key | wg pubkey | tee /etc/wireguard/client-public.key
-
-    cat > /etc/wireguard/wg-client.conf << EOF
-    [Interface]
-    PrivateKey = $(cat /etc/wireguard/client-private.key)
-    Address = 192.168.<subnet>.2/24
-    DNS = 8.8.8.8
-
-    [Peer]
-    PublicKey = $(cat /etc/wireguard/public.key)
-    AllowedIPs = 0.0.0.0/0, ::/0
-    Endpoint = <devopsenv public ip>:51820
-    PersistentKeepalive = 5
-    EOF
-    ```
-
 4.  Start the server
 
     ```bash
     systemctl enable --now wg-quick@wg0.service
-
-    wg set wg0 peer $(cat /etc/wireguard/client-public.key) allowed-ips 192.168.<subnet>.2
     ```
 
 5.  Create a Wireguard client using the files generated above
@@ -530,6 +562,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 6.  (Optional) Setup a mobile WG client
 
     ```bash
+    dnf install epel-release -y
     dnf install qrencode
     qrencode -t png -o client-qr.png -r /etc/wireguard/wg-client.conf
     ```
@@ -563,6 +596,11 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
     - https://coredns.io/explugins/k8s_gateway/
     - https://github.com/ori-edge/k8s_gateway
     - https://github.com/ori-edge/k8s_gateway/blob/master/examples/install-clusterwide.yml
+- LoadBalancer
+  - https://github.com/metallb/metallb/issues/1154
+  - https://medium.com/@muppedaanvesh/deploying-nginx-on-kubernetes-a-quick-guide-04d533414967
+  - https://github.com/ori-edge/k8s_gateway/issues/279
+  - https://github.com/Joker9944/k8s-config/blob/5f1ede42e9dbb8f12d9e642c6d7a357ead51a0cd/apps/nameserver-apps/blocky/helm-release.yaml#L215-L278
 - Nexus
   - https://help.sonatype.com/en/installation-methods.html
   - https://github.com/sonatype/nxrm3-ha-repository/blob/main/nxrm-ha/values.yaml
@@ -614,6 +652,7 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
   - https://www.reddit.com/r/WireGuard/comments/g97zkf/wgquick_and_hot_reloadsync/
   - https://gist.github.com/nealfennimore/92d571db63404e7ddfba660646ceaf0d
   - https://unix.stackexchange.com/questions/735074/wireguard-how-to-route-internet-traffic-through-a-mobile-peer
+  - https://documentation.ubuntu.com/server/how-to/wireguard-vpn/troubleshooting/
 - Cert Manager
   - https://cert-manager.io/docs/installation/helm/
   - https://cert-manager.io/docs/usage/ingress/
