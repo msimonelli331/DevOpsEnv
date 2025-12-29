@@ -377,6 +377,17 @@ entries:
     urls:
     - https://github.com/msimonelli331/DevOpsEnv/releases/download/gitea-runner-0.1.0/gitea-runner-0.1.0.tgz
     version: 0.1.0
+  k3s-coredns:
+  - apiVersion: v2
+    appVersion: 1.13.1
+    created: "2025-12-29T20:37:16.313604001Z"
+    description: CoreDNS Helm chart for Kubernetes
+    digest: d8f486365f2404c873666d2d0b492c89344976c2c339903b31d8194fcc74c86b
+    name: k3s-coredns
+    type: application
+    urls:
+    - https://github.com/msimonelli331/DevOpsEnv/releases/download/k3s-coredns-0.0.1/k3s-coredns-0.0.1.tgz
+    version: 0.0.1
   nexus:
   - apiVersion: v2
     appVersion: 1.16.0
@@ -448,4 +459,4 @@ entries:
     urls:
     - https://github.com/msimonelli331/DevOpsEnv/releases/download/nexus-0.1.0/nexus-0.1.0.tgz
     version: 0.1.0
-generated: "2025-12-29T19:12:35.712174159Z"
+generated: "2025-12-29T20:37:16.313693634Z"
