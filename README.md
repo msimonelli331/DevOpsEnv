@@ -491,7 +491,7 @@ Your host should now be able to resolve Ingress hostnames and the internet
     PublicKey = $(cat /etc/wireguard/public.key)
     AllowedIPs = 0.0.0.0/0, ::/0
     Endpoint = <devopsenv public ip>:51820
-    PersistentKeepalive = 5
+    PersistentKeepalive = 25
     EOF
     ```
 
@@ -547,6 +547,60 @@ Your host should now be able to resolve Ingress hostnames and the internet
       nic=""
       iptables -D FORWARD -i wg0 -j ACCEPT
       iptables -t nat -D POSTROUTING -o \${nic} -j MASQUERADE
+      EOF
+      chmod +x /etc/wireguard/postdown.sh
+      ```
+
+    - Option 3: lan nic and wan nic
+
+      ```bash
+      cat > /etc/wireguard/postup.sh << EOF
+      lan=""
+      lan_subnet="192.168.<lan subnet>.0/24"
+      wan=""
+      # Lan is more specific, goes first
+      iptables -t nat -A POSTROUTING -d \${lan_subnet} -o \${lan} -j MASQUERADE
+      iptables -A FORWARD -i \${lan} -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -A FORWARD -d \${lan_subnet} -i wg0 -o \${lan} -j ACCEPT
+
+      iptables -A FORWARD -d \${lan_subnet} -i wg0 -o \${lan} -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -A FORWARD -i \${lan} -o wg0 -j ACCEPT
+
+      # Fallback to wan if subnet doesn't match
+      iptables -t nat -A POSTROUTING -o \${wan} -j MASQUERADE
+      iptables -A FORWARD -i \${wan} -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -A FORWARD -i wg0 -o \${wan} -j ACCEPT
+
+      iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE
+      iptables -A FORWARD -i wg0 -o \${wan} -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -A FORWARD -i \${wan} -o wg0 -j ACCEPT
+
+      wg set wg0 peer $(cat /etc/wireguard/client-public.key) allowed-ips 192.168.<subnet>.2/32
+      EOF
+      chmod +x /etc/wireguard/postup.sh
+      ```
+
+      ```bash
+      cat > /etc/wireguard/postdown.sh << EOF
+      lan=""
+      lan_subnet="192.168.<lan subnet>.0/24"
+      wan=""
+      # Lan is more specific, goes first
+      iptables -t nat -D POSTROUTING -d \${lan_subnet} -o \${lan} -j MASQUERADE
+      iptables -D FORWARD -i \${lan} -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -D FORWARD -d \${lan_subnet} -i wg0 -o \${lan} -j ACCEPT
+
+      iptables -D FORWARD -d \${lan_subnet} -i wg0 -o \${lan} -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -D FORWARD -i \${lan} -o wg0 -j ACCEPT
+
+      # Fallback to wan if subnet doesn't match
+      iptables -t nat -D POSTROUTING -o \${wan} -j MASQUERADE
+      iptables -D FORWARD -i \${wan} -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -D FORWARD -i wg0 -o \${wan} -j ACCEPT
+
+      iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE
+      iptables -D FORWARD -i wg0 -o \${wan} -m state --state RELATED,ESTABLISHED -j ACCEPT
+      iptables -D FORWARD -i \${wan} -o wg0 -j ACCEPT
       EOF
       chmod +x /etc/wireguard/postdown.sh
       ```
