@@ -8,7 +8,7 @@ Local pipeline builder image. This will be built with the private registries ca 
 
 2. Update env vars in the `.gitea/workflows/main.yml` to match the services
 
-   - `BUILDKIT_DAEMON` is the kubernetes service name
+   - **DEPRECATED** `BUILDKIT_DAEMON` is the kubernetes service name
    - `REGISTRY` is the kubernetes ingress name
 
 3. Add secrets for `NEXUS_USERNAME` and `NEXUS_PASSWORD` in this git repos Settings > Actions > Secrets

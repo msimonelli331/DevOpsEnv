@@ -26,11 +26,10 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 3. Choose minimal install
 4. Create an admin user
-5. Once booted, setup the root user password
+5. Once booted, switch to root
 
    ```bash
    sudo su -
-   passwd
    ```
 
 6. Disable firewalld, causes routing problems between pods
@@ -39,7 +38,9 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    systemctl disable --now firewalld
    ```
 
-7. Install snapd by following steps from [here](https://snapcraft.io/docs/installing-snap-on-rocky)
+##### MicroK8s
+
+1. Install snapd by following steps from [here](https://snapcraft.io/docs/installing-snap-on-rocky)
    ```bash
    dnf install epel-release -y
    dnf install snapd -y
@@ -84,7 +85,35 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    microk8s enable ingress
    ```
 
-### Helm
+### K3s
+
+#### Preconditions
+
+1. Internet Connection
+
+#### Install Steps
+
+1. Install k3s following steps from [here](https://docs.k3s.io/quick-start)
+
+   ```bash
+   curl -sfL https://get.k3s.io | sh -
+   echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" > /etc/profile.d/k3s.sh
+   source /etc/profile.d/k3s.sh
+   ```
+
+2. Install helm following steps from [here](https://helm.sh/docs/intro/install/)
+
+   ```bash
+   dnf install -y tar
+   curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+   chmod 700 get_helm.sh
+   ./get_helm.sh
+   rm ./get_helm.sh
+   ```
+
+**Note: K3s comes with klipper lb as its loadbalancer so there is no need to add metallb**
+
+### DevOpsEnv Helm Charts
 
 #### Preconditions
 
@@ -114,6 +143,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 3. This helm repo added
 
 #### Install Steps
+
+##### MicroK8s
 
 1. Disable microk8s coredns
 
@@ -156,6 +187,16 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    kubectl create secret tls ingress-tls -n devops --cert=server.crt --key=server.key
    ```
 
+##### K3s
+
+1. Install coredns, be sure to change the IP to your machines IP. **Note: Change devops to match your desired domain name**
+
+   ```bash
+   helm install k3s-coredns devopsenv/k3s-coredns --create-namespace -n devops \
+   --set vars.domain=devops --set vars.ip=127.0.0.1 \
+    -f k3s-coredns-values.yaml
+   ```
+
 ### Cert Manager
 
 #### Preconditions
@@ -196,6 +237,8 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 #### Install Steps
 
+##### MicroK8s
+
 1. Enable the metallb loadbalancer
 
    ```bash
@@ -210,9 +253,9 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
    kubectl get svc external-dns -n kube-system
    ```
 
-4. Edit /etc/resolv.conf or a static ip config and paste in the IP from the previous step as the DNS server
+4. On a different machine, edit /etc/resolv.conf or a static ip config and paste in the IP from the previous step as the DNS server
 
-Your host should now be able to resolve Ingress hostnames and the internet
+Your external machine should now be able to resolve Ingress hostnames and the internet
 
 ### Nexus
 
@@ -270,6 +313,8 @@ Your host should now be able to resolve Ingress hostnames and the internet
 7. Create the registry credential for this private repo. **Note: Change container.devops to match your selected host and domain name for the docker repo**
 
    ```bash
+   NEXUS_USERNAME=<your username>
+   NEXUS_PASSWORD=<your password>
    kubectl create secret -n devops docker-registry regcred --docker-server=container.devops --docker-username=$NEXUS_USERNAME --docker-password=$NEXUS_PASSWORD
    ```
 
@@ -280,45 +325,72 @@ Your host should now be able to resolve Ingress hostnames and the internet
 
 9. Navigate to http://nexus.devops/ and enable the Docker Bearer Token Realm in Nexus Security->Realms Tab
 
-10. Trust the certs we created for the private container registry. **Note: Change container.devops to match your selected host and domain name for the docker repo**
+##### MicroK8s
 
-    **DEPRECATED**
+1. Trust the certs we created for the private container registry. **Note: Change container.devops to match your selected host and domain name for the docker repo**
 
-    ```bash
-    cp ca.crt /etc/pki/ca-trust/source/anchors/
-    update-ca-trust
+   **DEPRECATED**
 
-    mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
-    cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
-    server = "https://container.devops"
+   ```bash
+   cp ca.crt /etc/pki/ca-trust/source/anchors/
+   update-ca-trust
 
-    [host."https://container.devops"]
-    capabilities = ["pull", "resolve"]
-    EOF
-    ```
+   mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
+   cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
+   server = "https://container.devops"
 
-    **UPDATED**
+   [host."https://container.devops"]
+   capabilities = ["pull", "resolve"]
+   EOF
+   ```
 
-    ```bash
-    kubectl get secret -n devops devops-ca -o jsonpath='{.data.tls\.crt}' | base64 -d > /etc/pki/ca-trust/source/anchors/ca.crt
-    update-ca-trust
+   **UPDATED**
 
-    mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
-    cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
-    server = "https://container.devops"
+   ```bash
+   kubectl get secret -n devops devops-ca -o jsonpath='{.data.tls\.crt}' | base64 -d > /etc/pki/ca-trust/source/anchors/ca.crt
+   update-ca-trust
 
-    [host."https://container.devops"]
-    capabilities = ["pull", "resolve"]
-    EOF
-    ```
+   mkdir -p /var/snap/microk8s/current/args/certs.d/container.devops
+   cat > /var/snap/microk8s/current/args/certs.d/container.devops/hosts.toml << EOF
+   server = "https://container.devops"
 
-11. Restart microk8s
+   [host."https://container.devops"]
+   capabilities = ["pull", "resolve"]
+   EOF
+   ```
 
-    ```bash
-    systemctl start snapd
-    microk8s stop
-    microk8s start
-    ```
+2. Restart microk8s
+
+   ```bash
+   systemctl start snapd
+   microk8s stop
+   microk8s start
+   ```
+
+##### K3s
+
+1. Trust the certs we created for the private container registry. **Note: Change container.devops to match your selected host and domain name for the docker repo**
+
+   ```bash
+   kubectl get secret -n devops devops-ca -o jsonpath='{.data.tls\.crt}' | base64 -d > /etc/pki/ca-trust/source/anchors/ca.crt
+   update-ca-trust
+
+   cat > /etc/rancher/k3s/registries.yaml << EOF
+   configs:
+     "container.devops":
+       auth:
+         username: $NEXUS_USERNAME
+         password: $NEXUS_PASSWORD
+       tls:
+         ca_file: /etc/pki/ca-trust/source/anchors/ca.crt
+   EOF
+   ```
+
+2. Restart k3s
+
+   ```bash
+   systemctl restart k3s
+   ```
 
 ### Gitea
 
@@ -427,7 +499,7 @@ Your host should now be able to resolve Ingress hostnames and the internet
    helm upgrade gitea-runner devopsenv/gitea-runner -n devops
    ```
 
-**Note: If creating a new runner you must delete the .runner file: rm /mnt/devops/gitea-runner/.runner**
+**Note: If creating a new runner you must delete the .runner file: `rm /mnt/devops/gitea-runner/.runner`**
 
 ### Builder
 
@@ -633,6 +705,10 @@ Your host should now be able to resolve Ingress hostnames and the internet
   - https://kubernetes.github.io/ingress-nginx/deploy/#microk8s
   - https://microk8s.io/docs/addon-ingress
   - https://stackoverflow.com/questions/55672498/kubernetes-cluster-stuck-on-removing-pv-pvc
+- k3s
+  - https://docs.k3s.io/quick-start
+  - https://helm.sh/docs/intro/install/
+  - https://github.com/k3s-io/k3s/issues/1126
 - SSL Certs
   - https://arminreiter.com/2022/01/create-your-own-certificate-authority-ca-using-openssl/
 - CoreDNS
