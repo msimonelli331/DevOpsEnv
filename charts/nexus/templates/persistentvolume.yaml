@@ -1,0 +1,24 @@
+{{- if .Values.persistentVolume.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ template "nexus.fullname" . }}
+  labels: {{- include "nexus.labels" . | nindent 4 }}
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  local:
+    path: {{ .Values.persistentVolume.hostPath }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: {{ template "nexus.fullname" . }}
+          operator: In
+          values:
+          - local
+{{- end }}

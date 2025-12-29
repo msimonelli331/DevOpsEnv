@@ -1,0 +1,128 @@
+# Default values for nexus.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: gitea/gitea
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "1.22.1-rootless"
+
+env:
+  - name: USER
+    value: "git"
+  - name: USER_UID
+    value: "1000"
+  - name: USER_GID
+    value: "1000"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8081
+
+services:
+  - name: http
+    containerPort: 3000
+    protocol: TCP
+    targetPort: 3000
+  - name: ssh
+    containerPort: 2222
+    protocol: TCP
+    targetPort: 2222
+
+gitHostname: &gitHostname git.devops
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    cert-manager.io/issuer: ca-issuer
+    cert-manager.io/common-name: *gitHostname
+  hosts:
+    - host: *gitHostname
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 3000
+  tls:
+    - secretName: gitea
+      hosts:
+        - *gitHostname
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+persistentVolumes:
+  - name: gitea-data-volume
+    hostPath: /mnt/devops/gitea/data
+    mountPath: /var/lib/gitea
+    suffix: data
+  - name: gitea-config-volume
+    hostPath: /mnt/devops/gitea/config
+    mountPath: /etc/gitea
+    suffix: config
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

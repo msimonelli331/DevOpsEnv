@@ -1,0 +1,27 @@
+ARG DEBIAN_IMAGE=debian:stable-slim
+ARG BASE=gcr.io/distroless/static-debian12:nonroot
+
+FROM golang:1.24 AS compiler
+
+RUN mkdir -p /go/src/github.com/coredns/coredns
+COPY coredns /go/src/github.com/coredns/coredns
+WORKDIR /go/src/github.com/coredns/coredns
+ENV COREDNS_PLUGINS=k8s_gateway:github.com/ori-edge/k8s_gateway
+ENV GOFLAGS="-buildvcs=false"
+RUN make gen && make
+
+FROM --platform=$BUILDPLATFORM ${DEBIAN_IMAGE} AS build
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get -qq update \
+    && apt-get -qq --no-install-recommends install libcap2-bin
+COPY --from=compiler /go/src/github.com/coredns/coredns/coredns /coredns
+RUN setcap cap_net_bind_service=+ep /coredns
+
+FROM ${BASE}
+COPY --from=build /coredns /coredns
+USER nonroot:nonroot
+# Reset the working directory inherited from the base image back to the expected default:
+# https://github.com/coredns/coredns/issues/7009#issuecomment-3124851608
+WORKDIR /
+EXPOSE 53 53/udp
+ENTRYPOINT ["/coredns"]

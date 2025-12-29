@@ -1,0 +1,17 @@
+{{- $fullName := include "gitea.fullname" . -}}
+{{- $labels := include "gitea.labels" . -}}
+{{- range .Values.persistentVolumes }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $fullName }}-{{ .suffix }}
+  labels: {{ $labels | nindent 4 }}
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+{{- end }}
