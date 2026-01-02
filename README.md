@@ -189,12 +189,19 @@ To use these helm charts you need a kubernetes cluster. For this example we're g
 
 ##### K3s
 
-1. Install coredns, be sure to change the IP to your machines IP. **Note: Change devops to match your desired domain name**
+1. Install coredns custom configs, be sure to change the IP to your machines IP. **Note: Change devops to match your desired domain name**
 
    ```bash
    helm install k3s-coredns devopsenv/k3s-coredns --create-namespace -n devops \
    --set vars.domain=devops --set vars.ip=127.0.0.1 \
     -f k3s-coredns-values.yaml
+   ```
+
+1. Restart coredns
+
+   ```bash
+   kubectl scale deploy -n kube-system coredns --replicas=0
+   kubectl scale deploy -n kube-system coredns --replicas=1
    ```
 
 ### Cert Manager
@@ -442,7 +449,6 @@ Your external machine should now be able to resolve Ingress hostnames and the in
    3. Add the following secrets in the Settings > Actions > Secrets
       - NEXUS_USERNAME
       - NEXUS_PASSWORD
-      - OLLAMA_IP
 
 ### Gitea Runner
 
